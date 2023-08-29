@@ -32,4 +32,5 @@ jobs:
         with:
           artifacts: "sql-based-streaming-analytics-flink-job/target/sql-based-streaming-analytics-flink-job.jar"
           bodyFile: "CHANGELOG.md"
-          tag: $maven_version
+          prerelease: false
+          tag: ${{ maven_version }}
