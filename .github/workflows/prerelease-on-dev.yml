@@ -2,13 +2,13 @@ name: Build on commit
 
 on:
   push:
-    branches: [ 'main' ]
+    branches: [ 'dev' ]
   pull_request:
-    branches: [ 'main' ]
+    branches: [ 'dev' ]
 
 jobs:
   build:
-    name: Build and release on commit to main branch
+    name: Build and pre-release on commit to dev branch
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,7 +29,7 @@ jobs:
         id: create_release
         with:
           draft: false
-          prerelease: false
+          prerelease: true
           release_name: ${{ steps.version.outputs.version }}
           tag_name: ${{ github.ref }}
           body_path: CHANGELOG.md
