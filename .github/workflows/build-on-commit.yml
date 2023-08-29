@@ -1,13 +1,14 @@
-name: Build on commit
+name: Build and release on
 
 on:
   push:
-    branches: [ 'dev']
+    branches: [ '**', '!main', '!dev' ]
   pull_request:
-    branches: [ 'dev' ]
+    branches: [ '**', '!main', '!dev' ]
 
 jobs:
   build:
+    name: Build on commit to branches not being main or dev
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
