@@ -1,0 +1,9 @@
+[
+  {
+    "PropertyGroupId": "ENV",
+    "PropertyMap": {
+      "transaction.threshold": "1500",
+      "run.file": "alert-r5.sql"
+    }
+  }
+]
