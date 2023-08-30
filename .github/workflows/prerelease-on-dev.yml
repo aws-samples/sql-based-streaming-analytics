@@ -10,8 +10,8 @@ on:
     branches: [ 'dev' ]
 
 jobs:
-  build:
-    name: Build and pre-release on commit to dev branch
+  build_flink_job:
+    name: Build and pre-release Apache Flink Job on commit to dev branch
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,12 +22,12 @@ jobs:
           java-version: '11'
           distribution: 'corretto'
           cache: maven
-      - name: Build with Maven
+      - name: Build Apache Flink Job with Maven
         run: mvn -f sql-based-streaming-analytics-flink-job/pom.xml --batch-mode --update-snapshots verify
-      - name: Extract Maven project version
-        run: echo MAVEN_PROJECT_VERSION=$(mvn -f sql-based-streaming-analytics-flink-job/pom.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec) >> "$GITHUB_OUTPUT"
+      - name: Extract Apache Flink job Maven project version
+        run: echo FLINK_JOB_MAVEN_PROJECT_VERSION=$(mvn -f sql-based-streaming-analytics-flink-job/pom.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec) >> "$GITHUB_OUTPUT"
         id: extract_maven_version
-      - name: release
+      - name: Prerelease Apache Flink Job
         uses: ncipollo/release-action@v1
         with:
           artifacts: "sql-based-streaming-analytics-flink-job/target/sql-based-streaming-analytics-flink-job.jar"
@@ -35,4 +35,30 @@ jobs:
           prerelease: true
           allowUpdates: true
           replacesArtifacts: true
-          tag: ${{ steps.extract_maven_version.outputs.MAVEN_PROJECT_VERSION }}
+          tag: ${{ steps.extract_maven_version.outputs.FLINK_JOB_MAVEN_PROJECT_VERSION }}
+  build_data_access_ui:
+    name: Build and pre-release data access UI on commit to dev branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+          cache: maven
+      - name: Build data access UI with Maven
+        run: mvn -f sql-based-streaming-analytics-data-access-ui/pom.xml --batch-mode --update-snapshots verify
+      - name: Extract data access UI Maven project version
+        run: echo DATA_ACCESS_UI_MAVEN_PROJECT_VERSION=$(mvn -f sql-based-streaming-analytics-data-access-ui/pom.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec) >> "$GITHUB_OUTPUT"
+        id: extract_maven_version
+      - name: Prerelease data access UI
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "sql-based-streaming-analytics-data-access-ui/target/sql-based-streaming-analytics-data-access-ui.jar"
+          bodyFile: "CHANGELOG.md"
+          prerelease: true
+          allowUpdates: true
+          replacesArtifacts: true
+          tag: ${{ steps.extract_maven_version.outputs.DATA_ACCESS_UI_MAVEN_PROJECT_VERSION }}
