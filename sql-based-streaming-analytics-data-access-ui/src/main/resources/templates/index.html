@@ -117,8 +117,8 @@
             divElement.append(timeParagraph);
             listElement.append(divElement);
             listElement.className = "list-group-item";
-            if (eventContainer.length > 99) {
-                eventContainer.last().remove();
+            if (eventContainer.children().length > 3) {
+                eventContainer.children().last().remove();
             }
             eventContainer.prepend(listElement);
         }

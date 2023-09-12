@@ -9,6 +9,11 @@ import {
 async function main() {
     const app = new cdk.App();
     let sqlBasedStreamingAnalyticsKdaStack = new SqlBasedStreamingAnalyticsKdaStack(app, 'SqlBasedStreamingAnalyticsKdaStack', {});
+    try {
+        await sqlBasedStreamingAnalyticsKdaStack.startResourceCreation()
+    } catch (e) {
+        console.error("Error: ", e)
+    }
     let sqlBasedStreamingAnalyticsElasticBeanstalkStack = new SqlBasedStreamingAnalyticsElasticBeanstalkStack(app, 'SqlBasedStreamingAnalyticsElasticBeanstalkStack', {
         inputStream: sqlBasedStreamingAnalyticsKdaStack.kinesisInputStream,
         outputStream: sqlBasedStreamingAnalyticsKdaStack.kinesisOutputStream

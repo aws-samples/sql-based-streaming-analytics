@@ -17,13 +17,13 @@ export class SqlBasedStreamingAnalyticsKdaStack extends cdk.Stack {
         super(scope, id, props);
     }
 
-    async createResources() {
+    async startResourceCreation() {
         await this.fileDownload()
         this.kinesisInputStream = this.createKinesisStream("inputStream");
         this.kinesisOutputStream = this.createKinesisStream("outputStream");
         const bucket = this.createSqlFileBucket();
         const s3Url = this.uploadSqlFile(bucket, "simpleSql.sql")
-        this.createMsfApplication("simpleSql", s3Url);
+        this.createMsfApplication("simpleSql", s3Url, bucket);
     }
 
     private createKinesisStream(streamName: string) {
@@ -33,7 +33,7 @@ export class SqlBasedStreamingAnalyticsKdaStack extends cdk.Stack {
         })
     }
 
-    private createMsfApplication(sqlFile: string, s3Url: any) {
+    private createMsfApplication(sqlFile: string, s3Url: string, sqlFileBucket: Bucket) {
         let propertyGroups: any = {
             "stream": {
                 "input.name": this.kinesisInputStream.streamName,
@@ -54,6 +54,9 @@ export class SqlBasedStreamingAnalyticsKdaStack extends cdk.Stack {
                 removalPolicy: RemovalPolicy.DESTROY
             }
         );
+        this.kinesisInputStream.grantReadWrite(application)
+        this.kinesisOutputStream.grantReadWrite(application)
+        sqlFileBucket.grantRead(application)
     }
 
     private createSqlFileBucket() {
@@ -61,8 +64,8 @@ export class SqlBasedStreamingAnalyticsKdaStack extends cdk.Stack {
     }
 
     private uploadSqlFile(bucket: Bucket, sql: string) {
-        let bucketDeployment = new BucketDeployment(this, sql + "FileDeployment", {
-            sources: [Source.asset(`${__dirname}/../../sql/simpleSql.sql`)],
+        new BucketDeployment(this, sql + "FileDeployment", {
+            sources: [Source.asset(`${__dirname}/../../sql`)],
             destinationBucket: bucket
         });
         return `s3://${bucket.bucketName}/${sql}`
