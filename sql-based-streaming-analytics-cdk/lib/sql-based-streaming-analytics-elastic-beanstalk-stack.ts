@@ -3,7 +3,7 @@ import {Construct} from 'constructs';
 import * as elasticbeanstalk from 'aws-cdk-lib/aws-elasticbeanstalk';
 import * as s3assets from 'aws-cdk-lib/aws-s3-assets';
 import * as iam from 'aws-cdk-lib/aws-iam'
-import * as https from "https";
+import * as fr from "follow-redirects"
 import * as fs from "fs";
 import {Stream} from 'aws-cdk-lib/aws-kinesis'
 import Func = jest.Func;
@@ -14,50 +14,59 @@ interface SqlBasedStreamingAnalyticsElasticBeanstalkStackProps extends cdk.Stack
 }
 
 export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
+    private props: SqlBasedStreamingAnalyticsElasticBeanstalkStackProps;
 
     constructor(scope: Construct, id: string, props: SqlBasedStreamingAnalyticsElasticBeanstalkStackProps) {
         super(scope, id, props);
+        this.props = props;
     }
 
     public async startResourceCreation() {
-        console.log("Starting download...")
         await this.fileDownload();
-        console.log("File downloaded...")
         const applicationJar = new s3assets.Asset(this, 'ApplicationJAR', {
-            path: '/tmp/app.jar',
+            path: `${__dirname}/../app.jar`,
         });
-        const appName = 'SqlBasedStreamingAnalyticsDataAccessUi';
+        const appName = 'DataAccessUi';
         const app = new elasticbeanstalk.CfnApplication(this, appName, {
             applicationName: appName,
         });
         const appVersionProps = new elasticbeanstalk.CfnApplicationVersion(this, 'AppVersion', {
             applicationName: appName,
-
             sourceBundle: {
                 s3Bucket: applicationJar.s3BucketName,
                 s3Key: applicationJar.s3ObjectKey,
             },
         });
-        appVersionProps.addDependency(app);
-
-        const myRole = new iam.Role(this, `${appName}-aws-elasticbeanstalk-ec2-role`, {
+        appVersionProps.addDependency(app)
+        const ebIamRole = new iam.Role(this, `${appName}-aws-elasticbeanstalk-ec2-role`, {
             assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
         });
-
-        const managedPolicy = iam.ManagedPolicy.fromAwsManagedPolicyName('AWSElasticBeanstalkWebTier')
-        myRole.addManagedPolicy(managedPolicy);
-
-        let cfnInstanceProfile = new iam.CfnInstanceProfile(this, `${appName}-InstanceProfile`, {
+        ebIamRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSElasticBeanstalkWebTier'));
+        // this.props.inputStream.grantReadWrite(ebIamRole);
+        // this.props.outputStream.grantReadWrite(ebIamRole);
+        let instanceProfileName = `${appName}-InstanceProfile`;
+        let cfnInstanceProfile = new iam.CfnInstanceProfile(this, instanceProfileName, {
+            instanceProfileName: instanceProfileName,
             roles: [
-                myRole.roleName
+                ebIamRole.roleName
             ]
         });
+        const optionSettingProperties = this.createAppOptionSettings(instanceProfileName);
+        let cfnEnvironment = new elasticbeanstalk.CfnEnvironment(this, 'Environment', {
+            applicationName: app.applicationName || appName,
+            solutionStackName: '64bit Amazon Linux 2023 v4.0.0 running Corretto 17',
+            optionSettings: optionSettingProperties,
+            versionLabel: appVersionProps.ref,
+        });
+        cfnEnvironment.addDependency(cfnInstanceProfile)
+    }
 
+    private createAppOptionSettings(instanceProfileName?: string) {
         const optionSettingProperties: elasticbeanstalk.CfnEnvironment.OptionSettingProperty[] = [
             {
                 namespace: 'aws:autoscaling:launchconfiguration',
                 optionName: 'IamInstanceProfile',
-                value: cfnInstanceProfile.instanceProfileName,
+                value: instanceProfileName,
             },
             {
                 namespace: 'aws:elasticbeanstalk:environment',
@@ -73,27 +82,33 @@ export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
                 namespace: "aws:elasticbeanstalk:application:environment",
                 optionName: "SERVER_PORT",
                 value: "5000"
+            },
+            {
+                namespace: "aws:elasticbeanstalk:application:environment",
+                optionName: "DATA_ACCESS_UI_INPUT_STREAM_NAME",
+                value: this.props.inputStream.streamName
+            },
+            {
+                namespace: "aws:elasticbeanstalk:application:environment",
+                optionName: "DATA_ACCESS_UI_OUTPUT_STREAM_NAME",
+                value: this.props.inputStream.streamName
             }
         ];
-        const elbEnv = new elasticbeanstalk.CfnEnvironment(this, 'Environment', {
-            applicationName: app.applicationName || appName,
-            solutionStackName: '64bit Amazon Linux 2023 v4.0.0 running Corretto 17',
-            optionSettings: optionSettingProperties,
-            versionLabel: appVersionProps.ref,
-        });
+        return optionSettingProperties;
     }
 
     private async fileDownload(): Promise<void> {
-        const file = fs.createWriteStream('/tmp/app.jar')
         return new Promise((resolve, reject) => {
-            https.get("https://github.com/JWThewes/reusable-asset-sql-based-streaming-analytics/suites/15647102284/artifacts/893063792", res => {
-                console.log(res.statusMessage)
-                console.log(res.statusCode)
+            fr.https.get("https://github.com/JWThewes/release/releases/download/SNAPSHOT/sql-based-streaming-analytics-data-access-ui.jar", res => {
                 if (res.statusCode != 200) {
                     reject()
                 }
-                res.pipe(file)
-                resolve()
+                const writeStream = fs.createWriteStream(`${__dirname}/../app.jar`)
+                writeStream.on("finish", () => {
+                    writeStream.close();
+                    resolve();
+                }).on("error", reject);
+                res.pipe(writeStream)
             });
         })
     }

@@ -44,7 +44,7 @@ jobs:
       - name: Prerelease data access UI
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "sql-based-streaming-analytics-data-access-ui/target/sql-based-streaming-analytics-data-access-ui.jar"
+          artifacts: "sql-based-streaming-analytics-data-access-ui/target/sql-based-streaming-analytics-data-access-ui.jar","sql-based-streaming-analytics-flink-job/target/sql-based-streaming-analytics-flink-job.jar"
           bodyFile: "CHANGELOG.md"
           prerelease: true
           allowUpdates: true
