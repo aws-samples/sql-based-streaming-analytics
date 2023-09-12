@@ -21,12 +21,17 @@ jobs:
           cache: maven
       - name: Build Apache Flink Job with Maven
         run: mvn -f sql-based-streaming-analytics-flink-job/pom.xml --batch-mode --update-snapshots verify
-      - name: Archive Apache Flink Job artifacts
-        uses: actions/upload-artifact@v3
+      - name: Prerelease data access UI
+        uses: ncipollo/release-action@v1
         with:
-          name: sql-based-streaming-analytics-flink-job.jar
-          path: sql-based-streaming-analytics-flink-job/target/sql-based-streaming-analytics-flink-job.jar
-          if-no-files-found: error
+          artifacts: "sql-based-streaming-analytics-flink-job/target/sql-based-streaming-analytics-flink-job.jar"
+          bodyFile: "CHANGELOG.md"
+          prerelease: true
+          allowUpdates: true
+          repo: "release"
+          replacesArtifacts: true
+          token: ${{ secrets.RELEASE_GH_TOKEN }}
+          tag: "SNAPSHOT"
   build_data_access_ui:
     name: Build data access UI on commit to branches not being main or dev
     runs-on: ubuntu-latest
@@ -44,7 +49,7 @@ jobs:
       - name: Prerelease data access UI
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "sql-based-streaming-analytics-data-access-ui/target/sql-based-streaming-analytics-data-access-ui.jar,sql-based-streaming-analytics-flink-job/target/sql-based-streaming-analytics-flink-job.jar"
+          artifacts: "sql-based-streaming-analytics-data-access-ui/target/sql-based-streaming-analytics-data-access-ui.jar"
           bodyFile: "CHANGELOG.md"
           prerelease: true
           allowUpdates: true
