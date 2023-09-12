@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import {RemovalPolicy} from 'aws-cdk-lib';
+import {RemovalPolicy, Stack} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {Stream, StreamMode} from "aws-cdk-lib/aws-kinesis";
 import * as kda from "@aws-cdk/aws-kinesisanalytics-flink-alpha";
@@ -40,7 +40,10 @@ export class SqlBasedStreamingAnalyticsKdaStack extends cdk.Stack {
                 "output.name": this.kinesisOutputStream.streamName,
             },
             "ENV": {
-                "run.file": s3Url
+                "run.file": s3Url,
+                "REGION": Stack.of(this).region,
+                "INPUT_STREAM_NAME": this.kinesisInputStream.streamName,
+                "OUTPUT_STREAM_NAME": this.kinesisOutputStream.streamName,
             }
         };
 

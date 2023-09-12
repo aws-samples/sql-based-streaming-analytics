@@ -13,17 +13,33 @@
  *
  */
 
-CREATE TABLE stock_table
+CREATE TABLE order
 (
-    ticker     VARCHAR(6),
-    price DOUBLE,
+    customerId     INT,
+    customerName   VARCHAR(800),
+    productId     INT,
+    productName   VARCHAR(800),
     event_time TIMESTAMP(3),
     WATERMARK FOR event_time AS event_time - INTERVAL '5' SECOND
-) PARTITIONED BY (ticker)
+) PARTITIONED BY (customerId)
 WITH (
 'connector' = 'kinesis',
-'stream' = 'input-stream',
-'aws.region' = 'us-east-1',
+'stream' = '##INPUT_STREAM_NAME##',
+'aws.region' = '##REGION##',
 'scan.stream.initpos' = 'LATEST',
 'format' = 'json',
-'json.timestamp-format.standard' = 'ISO-8601')
+'json.timestamp-format.standard' = 'ISO-8601');
+
+CREATE TABLE orderOut
+(
+    customerId     INT
+) PARTITIONED BY (customerId)
+WITH (
+'connector' = 'kinesis',
+'stream' = '##OUTPUT_STREAM_NAME##',
+'aws.region' = '##REGION',
+'scan.stream.initpos' = 'LATEST',
+'format' = 'json',
+'json.timestamp-format.standard' = 'ISO-8601');
+
+INSERT INTO orderOut SELECT customerId FROM order;
