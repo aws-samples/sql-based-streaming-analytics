@@ -50,4 +50,5 @@ jobs:
           allowUpdates: true
           repo: https://github.com/JWThewes/release
           replacesArtifacts: true
+          token: ${{ secrets.RELEASE_GH_TOKEN }}
           tag: "SNAPSHOT"
