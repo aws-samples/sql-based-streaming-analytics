@@ -41,9 +41,13 @@ jobs:
           cache: maven
       - name: Build data access ui with Maven
         run: mvn -f sql-based-streaming-analytics-data-access-ui/pom.xml --batch-mode --update-snapshots verify
-      - name: Archive data access ui artifacts
-        uses: actions/upload-artifact@v3
+      - name: Prerelease data access UI
+        uses: ncipollo/release-action@v1
         with:
-          name: sql-based-streaming-analytics-data-access-ui.jar
-          path: sql-based-streaming-analytics-data-access-ui/target/sql-based-streaming-analytics-data-access-ui.jar
-          if-no-files-found: error
+          artifacts: "sql-based-streaming-analytics-data-access-ui/target/sql-based-streaming-analytics-data-access-ui.jar"
+          bodyFile: "CHANGELOG.md"
+          prerelease: true
+          allowUpdates: true
+          repo: https://github.com/JWThewes/release
+          replacesArtifacts: true
+          tag: "SNAPSHOT"

@@ -6,13 +6,14 @@ import * as assets from "aws-cdk-lib/aws-ecr-assets";
 import path from "path";
 
 export class SqlBasedStreamingAnalyticsKdaStack extends cdk.Stack {
+
+    public kinesisInputStream:Stream
+    public kinesisOutputStream:Stream
+
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
-        let kinesisInputStream = this.createKinesisStream("inputStream");
-        let kinesisOutputStream = this.createKinesisStream("outputStream");
-        let appRunner = this.createAppRunner();
-        kinesisInputStream.grantReadWrite(appRunner);
-        kinesisOutputStream.grantReadWrite(appRunner);
+        this.kinesisInputStream = this.createKinesisStream("inputStream");
+        this.kinesisOutputStream = this.createKinesisStream("outputStream");
     }
 
     private createKinesisStream(streamName: string) {
