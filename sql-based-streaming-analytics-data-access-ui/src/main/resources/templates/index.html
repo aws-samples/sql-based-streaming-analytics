@@ -35,6 +35,31 @@
     </div>
     <div class="row mt-3">
         <div class="col">
+            <h5>Available MSF applications:</h5>
+        </div>
+    </div>
+    <div class="row-cols-1 row-cols-md-3 g-4">
+        <div class="col" th:each="msfApp: ${msfApplicationList}">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${msfApp.getApplicationName()}"></h5>
+                    <span class="badge rounded-pill text-bg-primary"
+                          th:text="${msfApp.getApplicationStatusAsString()}"></span>
+                </div>
+                <div class="card-footer">
+                    <div class="btn-group">
+                        <button class="btn btn-success" th:data-app="${msfApp.applicationName}"
+                                onclick="startMsfApplication(this.getAttribute('data-app'))">Start MSF application
+                            <button class="btn btn-danger" th:data-app="${msfApp.applicationName}"
+                                    onclick="stopMsfApplication(this.getAttribute('data-app'))">Stop MSF application
+                            </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col">
             <div class="accordion" id="accordionData">
                 <div class="accordion-item">
                     <h2 class="accordion-header">
@@ -158,9 +183,9 @@
     function toggleDataGeneration() {
         let request = {};
         request.partitionKey = $('#partitionKeyValue').val()
-        request.fakerForPartitionKey = $('#fakerForPartitionKey').attr('checked')
-        request.data = document.jsonContent.json;
-        request.fakerForData = $('#fakerForData').attr('checked')
+        request.fakerForPartitionKey = $('#fakerForPartitionKey').attr('checked') === 'true'
+        request.data = JSON.stringify(document.jsonContent.json);
+        request.fakerForData = $('#fakerForData').attr('checked') === 'true'
         request.numRequestsPer2Seconds = $('#numRequestsPer2Seconds').val()
         const req = new XMLHttpRequest();
         req.open("POST", "/api/dataGeneration/toggle");
@@ -169,6 +194,24 @@
         }
         req.setRequestHeader("Content-Type", "application/json")
         req.send(JSON.stringify(request));
+    }
+
+    function stopMsfApplication(applicationName) {
+        const req = new XMLHttpRequest();
+        req.open("POST", "/api/msfApplication/stop/" + applicationName);
+        req.onreadystatechange = function () {
+            window.location.reload();
+        }
+        req.send(JSON.stringify(applicationName));
+    }
+
+    function startMsfApplication(applicationName) {
+        const req = new XMLHttpRequest();
+        req.open("POST", "/api/msfApplication/start/" + applicationName);
+        req.onreadystatechange = function () {
+            window.location.reload();
+        }
+        req.send(JSON.stringify(applicationName));
     }
 
     window.onload = function connectToWs() {

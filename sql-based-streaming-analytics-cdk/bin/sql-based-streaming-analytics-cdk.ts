@@ -16,7 +16,8 @@ async function main() {
     }
     let sqlBasedStreamingAnalyticsElasticBeanstalkStack = new SqlBasedStreamingAnalyticsElasticBeanstalkStack(app, 'SqlBasedStreamingAnalyticsElasticBeanstalkStack', {
         inputStream: sqlBasedStreamingAnalyticsKdaStack.kinesisInputStream,
-        outputStream: sqlBasedStreamingAnalyticsKdaStack.kinesisOutputStream
+        outputStream: sqlBasedStreamingAnalyticsKdaStack.kinesisOutputStream,
+        msfApplications: sqlBasedStreamingAnalyticsKdaStack.msfApplications
     });
     sqlBasedStreamingAnalyticsElasticBeanstalkStack.addDependency(sqlBasedStreamingAnalyticsKdaStack)
     try {

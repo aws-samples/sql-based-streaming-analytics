@@ -7,10 +7,12 @@ import * as fr from "follow-redirects"
 import * as fs from "fs";
 import {Stream} from 'aws-cdk-lib/aws-kinesis'
 import {AttributeType, Table} from "aws-cdk-lib/aws-dynamodb";
+import {Application} from "@aws-cdk/aws-kinesisanalytics-flink-alpha";
 
 interface SqlBasedStreamingAnalyticsElasticBeanstalkStackProps extends cdk.StackProps {
     inputStream: Stream
     outputStream: Stream
+    msfApplications: Application[]
 }
 
 export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
@@ -24,10 +26,10 @@ export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
     public async startResourceCreation() {
         await this.fileDownload();
         const kclCheckpointDynamoTable = this.createKclDynamoDbCheckpointTable();
-        this.createElasticBeanstalkAppAndEnvironment(kclCheckpointDynamoTable);
+        this.createElasticBeanstalkAppAndEnvironment(kclCheckpointDynamoTable, this.props.msfApplications);
     }
 
-    private createElasticBeanstalkAppAndEnvironment(kclCheckpointDynamoTable: Table) {
+    private createElasticBeanstalkAppAndEnvironment(kclCheckpointDynamoTable: Table, msfApplications: Application[]) {
         const applicationJar = new s3assets.Asset(this, 'ApplicationJAR', {
             path: `${__dirname}/../app.jar`,
         });
@@ -53,6 +55,17 @@ export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
         ebIamRole.addToPrincipalPolicy(new iam.PolicyStatement({
             actions: ["cloudwatch:PutMetricData"],
             resources: ["*"],
+            effect: iam.Effect.ALLOW,
+        }));
+        const applicationArns = msfApplications.map(app => app.applicationArn)
+        ebIamRole.addToPrincipalPolicy(new iam.PolicyStatement({
+            actions: ["kinesisanalytics:ListTagsForResource",
+                "kinesisanalytics:StopApplication",
+                "kinesisanalytics:GetApplicationState",
+                "kinesisanalytics:ListApplications",
+                "kinesisanalytics:DescribeApplication",
+                "kinesisanalytics:StartApplication"],
+            resources: applicationArns,
             effect: iam.Effect.ALLOW,
         }));
         let instanceProfileName = `${appName}-InstanceProfile`;

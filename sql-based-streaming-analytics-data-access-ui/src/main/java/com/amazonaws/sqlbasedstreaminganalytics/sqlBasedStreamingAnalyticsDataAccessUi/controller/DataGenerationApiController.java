@@ -24,11 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/dataGeneration")
-public class ApiController {
+public class DataGenerationApiController {
 
     private final KinesisProducerService kinesisProducerService;
 
-    public ApiController(KinesisProducerService kinesisProducerService) {
+    public DataGenerationApiController(KinesisProducerService kinesisProducerService) {
         this.kinesisProducerService = kinesisProducerService;
     }
 

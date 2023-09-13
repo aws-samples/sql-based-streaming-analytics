@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import {RemovalPolicy, Stack} from 'aws-cdk-lib';
+import {RemovalPolicy, Stack, Tags} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {Stream, StreamMode} from "aws-cdk-lib/aws-kinesis";
 import * as kda from "@aws-cdk/aws-kinesisanalytics-flink-alpha";
@@ -7,11 +7,13 @@ import {Bucket} from "aws-cdk-lib/aws-s3";
 import {BucketDeployment, Source} from "aws-cdk-lib/aws-s3-deployment";
 import * as fr from "follow-redirects";
 import fs from "fs";
+import {Application} from "@aws-cdk/aws-kinesisanalytics-flink-alpha";
 
 export class SqlBasedStreamingAnalyticsKdaStack extends cdk.Stack {
 
     public kinesisInputStream: Stream
     public kinesisOutputStream: Stream
+    public msfApplications: Application[] = []
 
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
@@ -57,6 +59,8 @@ export class SqlBasedStreamingAnalyticsKdaStack extends cdk.Stack {
                 removalPolicy: RemovalPolicy.DESTROY
             }
         );
+        Tags.of(application).add("application", "sqlBasedStreamingAnalytics");
+        this.msfApplications.push(application)
         this.kinesisInputStream.grantReadWrite(application)
         this.kinesisOutputStream.grantReadWrite(application)
         sqlFileBucket.grantRead(application)

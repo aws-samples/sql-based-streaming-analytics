@@ -45,7 +45,7 @@ public class KinesisProducerService {
 
     public void stopGeneratingRecords() {
         generatingRecordsRunning = false;
-        partitionKeyValue = "a";
+        partitionKeyValue = "";
         useFakerForPartitionKeyValue = false;
         body = "";
         useFakerForBody = false;
