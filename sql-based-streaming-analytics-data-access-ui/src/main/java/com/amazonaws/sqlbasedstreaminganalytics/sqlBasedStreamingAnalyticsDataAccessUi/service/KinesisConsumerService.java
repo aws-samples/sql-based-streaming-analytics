@@ -40,7 +40,7 @@ public class KinesisConsumerService {
                         dynamoClient,
                         cloudWatchClient,
                         UUID.randomUUID().toString(),
-                        new RecordProcessorFactory(socketHandler));
+                        new RecordProcessorFactory(socketHandler)).tableName(dataAccessUiConfigurationProperties.kclCheckpointDynamoTableName());
         Scheduler
                 scheduler =
                 new Scheduler(configsBuilder.checkpointConfig(),

@@ -6,7 +6,7 @@ import * as iam from 'aws-cdk-lib/aws-iam'
 import * as fr from "follow-redirects"
 import * as fs from "fs";
 import {Stream} from 'aws-cdk-lib/aws-kinesis'
-import Func = jest.Func;
+import {AttributeType, Table} from "aws-cdk-lib/aws-dynamodb";
 
 interface SqlBasedStreamingAnalyticsElasticBeanstalkStackProps extends cdk.StackProps {
     inputStream: Stream
@@ -23,6 +23,11 @@ export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
 
     public async startResourceCreation() {
         await this.fileDownload();
+        const kclCheckpointDynamoTable = this.createKclDynamoDbCheckpointTable();
+        this.createElasticBeanstalkAppAndEnvironment(kclCheckpointDynamoTable);
+    }
+
+    private createElasticBeanstalkAppAndEnvironment(kclCheckpointDynamoTable: Table) {
         const applicationJar = new s3assets.Asset(this, 'ApplicationJAR', {
             path: `${__dirname}/../app.jar`,
         });
@@ -44,8 +49,9 @@ export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
         ebIamRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSElasticBeanstalkWebTier'));
         this.props.inputStream.grantReadWrite(ebIamRole);
         this.props.outputStream.grantReadWrite(ebIamRole);
+        kclCheckpointDynamoTable.grantFullAccess(ebIamRole)
         ebIamRole.addToPrincipalPolicy(new iam.PolicyStatement({
-            actions: ["dynamodb:*"],
+            actions: ["cloudwatch:PutMetricData"],
             resources: ["*"],
             effect: iam.Effect.ALLOW,
         }));
@@ -56,7 +62,7 @@ export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
                 ebIamRole.roleName
             ]
         });
-        const optionSettingProperties = this.createAppOptionSettings(instanceProfileName);
+        const optionSettingProperties = this.createAppOptionSettings(kclCheckpointDynamoTable, instanceProfileName);
         let cfnEnvironment = new elasticbeanstalk.CfnEnvironment(this, 'Environment', {
             applicationName: app.applicationName || appName,
             solutionStackName: '64bit Amazon Linux 2023 v4.0.0 running Corretto 17',
@@ -66,7 +72,7 @@ export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
         cfnEnvironment.addDependency(cfnInstanceProfile)
     }
 
-    private createAppOptionSettings(instanceProfileName?: string) {
+    private createAppOptionSettings(kclCheckpointDynmaoTable: Table, instanceProfileName?: string) {
         const optionSettingProperties: elasticbeanstalk.CfnEnvironment.OptionSettingProperty[] = [
             {
                 namespace: 'aws:autoscaling:launchconfiguration',
@@ -97,6 +103,11 @@ export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
                 namespace: "aws:elasticbeanstalk:application:environment",
                 optionName: "DATA_ACCESS_UI_OUTPUT_STREAM_NAME",
                 value: this.props.inputStream.streamName
+            },
+            {
+                namespace: "aws:elasticbeanstalk:application:environment",
+                optionName: "DATA_ACCESS_UI_KCL_CHECKPOINT_DYNAMO_TABLE_NAME",
+                value: kclCheckpointDynmaoTable.tableName
             }
         ];
         return optionSettingProperties;
@@ -115,6 +126,15 @@ export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
                 }).on("error", reject);
                 res.pipe(writeStream)
             });
+        })
+    }
+
+    private createKclDynamoDbCheckpointTable() {
+        return new Table(this, "KclCheckpoint", {
+            partitionKey: {
+                name: "leaseKey",
+                type: AttributeType.STRING
+            }
         })
     }
 }

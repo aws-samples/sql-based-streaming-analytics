@@ -18,6 +18,6 @@ package com.amazonaws.sqlbasedstreaminganalytics.sqlBasedStreamingAnalyticsDataA
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties("data.access.ui")
-public record DataAccessUiConfigurationProperties(String inputStreamName, String outputStreamName) {
+public record DataAccessUiConfigurationProperties(String inputStreamName, String outputStreamName, String kclCheckpointDynamoTableName) {
 
 }
