@@ -17,4 +17,8 @@ public class Statement {
     public StatementType getStatementType() {
         return statementType;
     }
+
+    @Override public String toString() {
+        return "Statement{" + "statementSql='" + statementSql + '\'' + ", statementType=" + statementType + '}';
+    }
 }

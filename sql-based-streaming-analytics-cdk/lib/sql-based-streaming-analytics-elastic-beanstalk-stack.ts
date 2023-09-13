@@ -42,8 +42,13 @@ export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
             assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
         });
         ebIamRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSElasticBeanstalkWebTier'));
-        // this.props.inputStream.grantReadWrite(ebIamRole);
-        // this.props.outputStream.grantReadWrite(ebIamRole);
+        this.props.inputStream.grantReadWrite(ebIamRole);
+        this.props.outputStream.grantReadWrite(ebIamRole);
+        ebIamRole.addToPrincipalPolicy(new iam.PolicyStatement({
+            actions: ["dynamodb:*"],
+            resources: ["*"],
+            effect: iam.Effect.ALLOW,
+        }));
         let instanceProfileName = `${appName}-InstanceProfile`;
         let cfnInstanceProfile = new iam.CfnInstanceProfile(this, instanceProfileName, {
             instanceProfileName: instanceProfileName,
