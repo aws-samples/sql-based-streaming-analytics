@@ -24,18 +24,17 @@ jobs:
           cache: maven
       - name: Build Apache Flink Job with Maven
         run: mvn -f sql-based-streaming-analytics-flink-job/pom.xml --batch-mode --update-snapshots verify
-      - name: Extract Apache Flink job Maven project version
-        run: echo FLINK_JOB_MAVEN_PROJECT_VERSION=$(mvn -f sql-based-streaming-analytics-flink-job/pom.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec) >> "$GITHUB_OUTPUT"
-        id: extract_maven_version
-      - name: Prerelease Apache Flink Job
+      - name: Prerelease data access UI
         uses: ncipollo/release-action@v1
         with:
           artifacts: "sql-based-streaming-analytics-flink-job/target/sql-based-streaming-analytics-flink-job.jar"
           bodyFile: "CHANGELOG.md"
-          prerelease: false
+          prerelease: true
           allowUpdates: true
+          repo: "release"
           replacesArtifacts: true
-          tag: ${{ steps.extract_maven_version.outputs.FLINK_JOB_MAVEN_PROJECT_VERSION }}
+          token: ${{ secrets.RELEASE_GH_TOKEN }}
+          tag: "MAIN"
   build_data_access_ui:
     name: Build and release data access UI on commit to dev branch
     runs-on: ubuntu-latest
@@ -50,15 +49,14 @@ jobs:
           cache: maven
       - name: Build data access UI with Maven
         run: mvn -f sql-based-streaming-analytics-data-access-ui/pom.xml --batch-mode --update-snapshots verify
-      - name: Extract data access UI Maven project version
-        run: echo DATA_ACCESS_UI_MAVEN_PROJECT_VERSION=$(mvn -f sql-based-streaming-analytics-data-access-ui/pom.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec) >> "$GITHUB_OUTPUT"
-        id: extract_maven_version
-      - name: Release data access UI
+      - name: Prerelease data access UI
         uses: ncipollo/release-action@v1
         with:
           artifacts: "sql-based-streaming-analytics-data-access-ui/target/sql-based-streaming-analytics-data-access-ui.jar"
           bodyFile: "CHANGELOG.md"
-          prerelease: false
+          prerelease: true
           allowUpdates: true
+          repo: "release"
           replacesArtifacts: true
-          tag: ${{ steps.extract_maven_version.outputs.DATA_ACCESS_UI_MAVEN_PROJECT_VERSION }}
+          token: ${{ secrets.RELEASE_GH_TOKEN }}
+          tag: "MAIN"
