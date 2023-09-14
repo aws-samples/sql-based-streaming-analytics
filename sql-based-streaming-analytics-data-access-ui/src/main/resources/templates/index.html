@@ -155,26 +155,29 @@
 <script type="module">
     import {JSONEditor} from 'https://cdn.jsdelivr.net/npm/vanilla-jsoneditor/index.js'
 
-    document.jsonContent = {
+    const intitialContent = {
         text: undefined,
         json: {
-            customer: {
-                id: 5678,
-                name: "John Foo"
-            },
-            product: {
-                id: 1234,
-                name: "Lego"
-            }
+            customerId: 5678,
+            customerName: "John Foo",
+            productId: 1234,
+            productName: "Lego"
         }
     }
+
+    document.jsonContent = JSON.stringify(intitialContent.json);
 
     const editor = new JSONEditor({
         target: document.getElementById('inputDataJsonEditor'),
         props: {
             content: document.jsonContent,
             onChange: (updatedContent, previousContent, {contentErrors, patchResult}) => {
-                document.jsonContent = updatedContent
+                if(updatedContent.json !== undefined) {
+                    document.jsonContent = JSON.stringify(updatedContent.json);
+                } else {
+                    document.jsonContent = updatedContent.text
+                }
+
             }
         }
     })
@@ -184,7 +187,7 @@
         let request = {};
         request.partitionKey = $('#partitionKeyValue').val()
         request.fakerForPartitionKey = $('#fakerForPartitionKey').attr('checked') === 'true'
-        request.data = JSON.stringify(document.jsonContent.json);
+        request.data = document.jsonContent;
         request.fakerForData = $('#fakerForData').attr('checked') === 'true'
         request.numRequestsPer2Seconds = $('#numRequestsPer2Seconds').val()
         const req = new XMLHttpRequest();
@@ -221,7 +224,7 @@
         ws.onopen = function () {
             document.getElementById("wsConnected").style.removeProperty("display");
             document.getElementById("wsNotConnected").style.display = "none";
-            setTimeout(function () {
+            setInterval(function () {
                 ws.send('skipABeat');
             }, 5000);
         }

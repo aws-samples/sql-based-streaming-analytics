@@ -19,8 +19,7 @@ CREATE TABLE orderIn
     customerName VARCHAR(800),
     productId    INT,
     productName  VARCHAR(800),
-    event_time   TIMESTAMP(3),
-    WATERMARK FOR event_time AS event_time - INTERVAL '5' SECOND
+    eventTime_ltz AS PROCTIME()
 ) PARTITIONED BY (customerId)
 WITH (
 'connector' = 'kinesis',
@@ -40,13 +39,12 @@ CREATE TABLE orderOut
 WITH (
 'connector' = 'kinesis',
 'stream' = '##OUTPUT_STREAM_NAME##',
-'aws.region' = '##REGION',
-'scan.stream.initpos' = 'LATEST',
+'aws.region' = '##REGION##',
 'format' = 'json',
 'json.timestamp-format.standard' = 'ISO-8601');
 
 INSERT INTO orderOut
 SELECT window_start, window_end, customerId, COUNT(customerId) as orderCount
 FROM TABLE(
-        TUMBLE(TABLE orderIn, DESCRIPTOR(event_time), INTERVAL '20' SECONDS))
+        TUMBLE(TABLE orderIn, DESCRIPTOR(eventTime_ltz), INTERVAL '20' SECONDS))
 GROUP BY window_start, window_end, GROUPING SETS ((customerId), ());

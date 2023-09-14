@@ -15,12 +15,11 @@
 
 CREATE TABLE orderIn
 (
-    customerId     INT,
-    customerName   VARCHAR(800),
-    productId     INT,
-    productName   VARCHAR(800),
-    event_time TIMESTAMP(3),
-    WATERMARK FOR event_time AS event_time - INTERVAL '5' SECOND
+    customerId   INT,
+    customerName VARCHAR(800),
+    productId    INT,
+    productName  VARCHAR(800),
+    eventTime_ltz AS PROCTIME()
 ) PARTITIONED BY (customerId)
 WITH (
 'connector' = 'kinesis',
@@ -32,14 +31,16 @@ WITH (
 
 CREATE TABLE orderOut
 (
-    customerId     INT
+    customerId INT,
+    productId  INT
 ) PARTITIONED BY (customerId)
 WITH (
 'connector' = 'kinesis',
 'stream' = '##OUTPUT_STREAM_NAME##',
-'aws.region' = '##REGION',
-'scan.stream.initpos' = 'LATEST',
+'aws.region' = '##REGION##',
 'format' = 'json',
 'json.timestamp-format.standard' = 'ISO-8601');
 
-INSERT INTO orderOut SELECT customerId FROM orderIn;
+INSERT INTO orderOut
+SELECT customerId, productId
+FROM orderIn;
