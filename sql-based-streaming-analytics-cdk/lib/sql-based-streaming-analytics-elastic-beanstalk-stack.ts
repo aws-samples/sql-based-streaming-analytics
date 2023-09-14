@@ -1,4 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
+import {RemovalPolicy} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import * as elasticbeanstalk from 'aws-cdk-lib/aws-elasticbeanstalk';
 import * as s3assets from 'aws-cdk-lib/aws-s3-assets';
@@ -62,10 +63,16 @@ export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
             actions: ["kinesisanalytics:ListTagsForResource",
                 "kinesisanalytics:StopApplication",
                 "kinesisanalytics:GetApplicationState",
-                "kinesisanalytics:ListApplications",
                 "kinesisanalytics:DescribeApplication",
                 "kinesisanalytics:StartApplication"],
             resources: applicationArns,
+            effect: iam.Effect.ALLOW,
+        }));
+        ebIamRole.addToPrincipalPolicy(new iam.PolicyStatement({
+            actions: [
+                "kinesisanalytics:ListApplications",
+                ],
+            resources: ["*"],
             effect: iam.Effect.ALLOW,
         }));
         let instanceProfileName = `${appName}-InstanceProfile`;
@@ -83,6 +90,11 @@ export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
             versionLabel: appVersionProps.ref,
         });
         cfnEnvironment.addDependency(cfnInstanceProfile)
+        new cdk.CfnOutput(this, 'dataAccessUiUrl', {
+            value: "http://" + cfnEnvironment.attrEndpointUrl,
+            description: 'The URL which can be used to access the Data Access UI',
+            exportName: 'dataAccessUiUrl',
+        });
     }
 
     private createAppOptionSettings(kclCheckpointDynmaoTable: Table, instanceProfileName?: string) {
@@ -115,7 +127,7 @@ export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
             {
                 namespace: "aws:elasticbeanstalk:application:environment",
                 optionName: "DATA_ACCESS_UI_OUTPUT_STREAM_NAME",
-                value: this.props.inputStream.streamName
+                value: this.props.outputStream.streamName
             },
             {
                 namespace: "aws:elasticbeanstalk:application:environment",
@@ -147,7 +159,8 @@ export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
             partitionKey: {
                 name: "leaseKey",
                 type: AttributeType.STRING
-            }
+            },
+            removalPolicy: RemovalPolicy.DESTROY
         })
     }
 }

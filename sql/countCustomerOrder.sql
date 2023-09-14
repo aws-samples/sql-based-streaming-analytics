@@ -15,11 +15,11 @@
 
 CREATE TABLE orderIn
 (
-    customerId     INT,
-    customerName   VARCHAR(800),
-    productId     INT,
-    productName   VARCHAR(800),
-    event_time TIMESTAMP(3),
+    customerId   INT,
+    customerName VARCHAR(800),
+    productId    INT,
+    productName  VARCHAR(800),
+    event_time   TIMESTAMP(3),
     WATERMARK FOR event_time AS event_time - INTERVAL '5' SECOND
 ) PARTITIONED BY (customerId)
 WITH (
@@ -32,7 +32,10 @@ WITH (
 
 CREATE TABLE orderOut
 (
-    customerId     INT
+    window_start TIMESTAMP(3),
+    window_end TIMESTAMP(3),
+    customerId INT,
+    orderCount INT
 ) PARTITIONED BY (customerId)
 WITH (
 'connector' = 'kinesis',
@@ -42,4 +45,8 @@ WITH (
 'format' = 'json',
 'json.timestamp-format.standard' = 'ISO-8601');
 
-INSERT INTO orderOut SELECT customerId FROM orderIn;
+INSERT INTO orderOut
+SELECT window_start, window_end, customerId, COUNT(customerId) as orderCount
+FROM TABLE(
+        TUMBLE(TABLE orderIn, DESCRIPTOR(event_time), INTERVAL '20' SECONDS))
+GROUP BY window_start, window_end, GROUPING SETS ((customerId), ());

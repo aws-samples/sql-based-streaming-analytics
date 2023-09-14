@@ -49,7 +49,10 @@ public class SqlExtractor {
         StatementType currentStatementType = null;
         Set<Statement> statementSet = new LinkedHashSet<>();
         while ((line = bufferedReader.readLine()) != null) {
-            if (!line.trim().isEmpty() && !line.trim().startsWith("--")) {
+            if (!line.trim().isEmpty() &&
+                !line.trim().startsWith("--") &&
+                !line.trim().startsWith("/*") &&
+                !line.trim().startsWith("*")) {
                 currentStatementType = determineStatementType(line, currentStatementType);
                 String tplLine = line;
                 for (Object key : properties.keySet()) {
@@ -59,7 +62,7 @@ public class SqlExtractor {
                                     properties.getProperty(key.toString()));
                 }
                 resultBuilder.append(tplLine);
-                if (line.endsWith(";;")) {
+                if (line.endsWith(";")) {
                     if (currentStatementType == null) {
                         throw new RuntimeException("Error parsing SQL: " + resultBuilder);
                     }
