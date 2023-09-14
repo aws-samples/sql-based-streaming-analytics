@@ -155,7 +155,7 @@
 <script type="module">
     import {JSONEditor} from 'https://cdn.jsdelivr.net/npm/vanilla-jsoneditor/index.js'
 
-    const intitialContent = {
+    document.jsonContent = {
         text: undefined,
         json: {
             customerId: 5678,
@@ -165,19 +165,12 @@
         }
     }
 
-    document.jsonContent = JSON.stringify(intitialContent.json);
-
     const editor = new JSONEditor({
         target: document.getElementById('inputDataJsonEditor'),
         props: {
             content: document.jsonContent,
             onChange: (updatedContent, previousContent, {contentErrors, patchResult}) => {
-                if(updatedContent.json !== undefined) {
-                    document.jsonContent = JSON.stringify(updatedContent.json);
-                } else {
-                    document.jsonContent = updatedContent.text
-                }
-
+                document.jsonContent = updatedContent
             }
         }
     })
@@ -187,7 +180,11 @@
         let request = {};
         request.partitionKey = $('#partitionKeyValue').val()
         request.fakerForPartitionKey = $('#fakerForPartitionKey').attr('checked') === 'true'
-        request.data = document.jsonContent;
+        if (document.jsonContent.json) {
+            request.data = JSON.stringify(document.jsonContent.json);
+        } else {
+            request.data = document.jsonContent.text;
+        }
         request.fakerForData = $('#fakerForData').attr('checked') === 'true'
         request.numRequestsPer2Seconds = $('#numRequestsPer2Seconds').val()
         const req = new XMLHttpRequest();

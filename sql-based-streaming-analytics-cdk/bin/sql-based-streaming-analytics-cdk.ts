@@ -1,27 +1,32 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import {SqlBasedStreamingAnalyticsKdaStack} from '../lib/sql-based-streaming-analytics-kda-stack';
+import {CoreSolutionStack} from '../lib/core-solution-stack';
 import {
-    SqlBasedStreamingAnalyticsElasticBeanstalkStack
-} from "../lib/sql-based-streaming-analytics-elastic-beanstalk-stack";
+    FullSolutionStack
+} from "../lib/full-solution-stack";
+import {FullSolutionBaseStack} from "../lib/full-solution-base-stack";
 
 async function main() {
     const app = new cdk.App();
-    let sqlBasedStreamingAnalyticsKdaStack = new SqlBasedStreamingAnalyticsKdaStack(app, 'SqlBasedStreamingAnalyticsKdaStack', {});
+    let fullSolutionBaseStack = new FullSolutionBaseStack(app, 'SqlBasedStreamingAnalyticsFullSolutionBaseStack', {});
+    let coreSolutionStack = new CoreSolutionStack(app, 'SqlBasedStreamingAnalyticsKdaStack', {
+        inputStream: fullSolutionBaseStack.kinesisInputStream,
+        outputStream: fullSolutionBaseStack.kinesisOutputStream
+    });
     try {
-        await sqlBasedStreamingAnalyticsKdaStack.startResourceCreation()
+        await coreSolutionStack.startResourceCreation()
     } catch (e) {
         console.error("Error: ", e)
     }
-    let sqlBasedStreamingAnalyticsElasticBeanstalkStack = new SqlBasedStreamingAnalyticsElasticBeanstalkStack(app, 'SqlBasedStreamingAnalyticsElasticBeanstalkStack', {
-        inputStream: sqlBasedStreamingAnalyticsKdaStack.kinesisInputStream,
-        outputStream: sqlBasedStreamingAnalyticsKdaStack.kinesisOutputStream,
-        msfApplications: sqlBasedStreamingAnalyticsKdaStack.msfApplications
+    let fullSolutionStack = new FullSolutionStack(app, 'SqlBasedStreamingAnalyticsElasticBeanstalkStack', {
+        inputStream: fullSolutionBaseStack.kinesisInputStream,
+        outputStream: fullSolutionBaseStack.kinesisOutputStream,
+        msfApplications: coreSolutionStack.msfApplications
     });
-    sqlBasedStreamingAnalyticsElasticBeanstalkStack.addDependency(sqlBasedStreamingAnalyticsKdaStack)
+    fullSolutionStack.addDependency(coreSolutionStack)
     try {
-        await sqlBasedStreamingAnalyticsElasticBeanstalkStack.startResourceCreation()
+        await fullSolutionStack.startResourceCreation()
     } catch (e) {
         console.error("Error: ", e)
     }

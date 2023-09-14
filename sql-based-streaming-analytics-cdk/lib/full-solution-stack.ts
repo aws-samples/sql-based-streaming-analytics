@@ -10,17 +10,21 @@ import {Stream} from 'aws-cdk-lib/aws-kinesis'
 import {AttributeType, Table} from "aws-cdk-lib/aws-dynamodb";
 import {Application} from "@aws-cdk/aws-kinesisanalytics-flink-alpha";
 
-interface SqlBasedStreamingAnalyticsElasticBeanstalkStackProps extends cdk.StackProps {
+interface FullSolutionProps extends cdk.StackProps {
     inputStream: Stream
     outputStream: Stream
     msfApplications: Application[]
 }
 
-export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
-    private props: SqlBasedStreamingAnalyticsElasticBeanstalkStackProps;
+export class FullSolutionStack extends cdk.Stack {
+    private props: FullSolutionProps;
 
-    constructor(scope: Construct, id: string, props: SqlBasedStreamingAnalyticsElasticBeanstalkStackProps) {
+    constructor(scope: Construct, id: string, props: FullSolutionProps) {
         super(scope, id, props);
+        props.msfApplications.forEach(app => {
+            props.inputStream.grantReadWrite(app)
+            props.outputStream.grantReadWrite(app)
+        })
         this.props = props;
     }
 
@@ -71,7 +75,7 @@ export class SqlBasedStreamingAnalyticsElasticBeanstalkStack extends cdk.Stack {
         ebIamRole.addToPrincipalPolicy(new iam.PolicyStatement({
             actions: [
                 "kinesisanalytics:ListApplications",
-                ],
+            ],
             resources: ["*"],
             effect: iam.Effect.ALLOW,
         }));

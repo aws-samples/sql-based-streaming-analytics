@@ -9,20 +9,23 @@ import {BucketDeployment, Source} from "aws-cdk-lib/aws-s3-deployment";
 import * as fr from "follow-redirects";
 import fs from "fs";
 
-export class SqlBasedStreamingAnalyticsKdaStack extends cdk.Stack {
+interface CoreSolutionStackProps extends cdk.StackProps {
+    inputStream?: Stream
+    outputStream?: Stream
+}
 
-    public kinesisInputStream: Stream
-    public kinesisOutputStream: Stream
+export class CoreSolutionStack extends cdk.Stack {
+
     public msfApplications: Application[] = []
+    private props: CoreSolutionStackProps;
 
-    constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+    constructor(scope: Construct, id: string, props: CoreSolutionStackProps) {
         super(scope, id, props);
+        this.props = props;
     }
 
     async startResourceCreation() {
         await this.fileDownload()
-        this.kinesisInputStream = this.createKinesisStream("inputStream");
-        this.kinesisOutputStream = this.createKinesisStream("outputStream");
         const bucket = this.createSqlFileBucket();
         this.uploadSqlFiles(bucket)
         fs.readdir(`${__dirname}/../../sql`, (err, files) => {
@@ -30,37 +33,14 @@ export class SqlBasedStreamingAnalyticsKdaStack extends cdk.Stack {
                 return console.log('Unable to scan directory: ' + err);
             }
             for (let file of files) {
-                console.log("Found file " + file);
                 const s3Url = `s3://${bucket.bucketName}/${file}`
                 this.createMsfApplication(file.replace(".sql", ""), s3Url, bucket);
             }
         });
-        //
-        // const s3Url = this.uploadSqlFile(bucket, "simpleSql.sql")
-        // this.createMsfApplication("simpleSql", s3Url, bucket);
-    }
-
-    private createKinesisStream(streamName: string) {
-        return new Stream(this, streamName, {
-            streamMode: StreamMode.PROVISIONED,
-            shardCount: 4,
-        })
     }
 
     private createMsfApplication(sqlFile: string, s3Url: string, sqlFileBucket: Bucket) {
-        console.log("SqlFileName " + sqlFile)
-        let propertyGroups: any = {
-            "stream": {
-                "input.name": this.kinesisInputStream.streamName,
-                "output.name": this.kinesisOutputStream.streamName,
-            },
-            "ENV": {
-                "run.file": s3Url,
-                "REGION": Stack.of(this).region,
-                "INPUT_STREAM_NAME": this.kinesisInputStream.streamName,
-                "OUTPUT_STREAM_NAME": this.kinesisOutputStream.streamName,
-            }
-        };
+        let propertyGroups = this.createPropertyGroups(s3Url);
 
         const application = new kda.Application(this, sqlFile + "MsfApplication", {
                 code: kda.ApplicationCode.fromAsset(`${__dirname}/../flinkJob.jar`),
@@ -73,9 +53,23 @@ export class SqlBasedStreamingAnalyticsKdaStack extends cdk.Stack {
         );
         Tags.of(application).add("application", "sqlBasedStreamingAnalytics");
         this.msfApplications.push(application)
-        this.kinesisInputStream.grantReadWrite(application)
-        this.kinesisOutputStream.grantReadWrite(application)
         sqlFileBucket.grantRead(application)
+    }
+
+    private createPropertyGroups(s3Url: string) {
+        let propertyGroups: any = {
+            "ENV": {
+                "run.file": s3Url,
+                "REGION": Stack.of(this).region,
+            }
+        };
+        if (this.props.inputStream) {
+            propertyGroups.ENV.INPUT_STREAM_NAME = this.props.inputStream.streamName
+        }
+        if (this.props.outputStream) {
+            propertyGroups.ENV.OUTPUT_STREAM_NAME = this.props.outputStream.streamName
+        }
+        return propertyGroups;
     }
 
     private createSqlFileBucket() {
