@@ -4,6 +4,8 @@ package com.amazonaws.sqlBasedStreamingAnalytics.sql;
 import com.amazonaws.sqlBasedStreamingAnalytics.entity.Statement;
 import com.amazonaws.sqlBasedStreamingAnalytics.entity.StatementType;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 
@@ -22,25 +24,35 @@ import java.util.Set;
 public class SqlExtractor {
 
     private final S3Client s3Client = S3Client.builder().build();
+    private static final Logger LOGGER = LoggerFactory.getLogger(SqlExtractor.class);
 
     public Set<Statement> parseSql(String sqlFileName, Properties properties) throws IOException, URISyntaxException {
-        Set<Statement> statements = new LinkedHashSet<>();
         try (InputStream resourceAsStream = getSqlFileInputStream(sqlFileName)) {
             try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(
                     resourceAsStream)))) {
-                return getStatements(properties, bufferedReader, statements);
+                Set<Statement> statements = getStatements(properties, bufferedReader);
+                LOGGER.info("Read following SQL statements: {}", statements);
+                return statements;
+            } catch (Exception e) {
+                LOGGER.error("Error reading sql file", e);
+                throw new RuntimeException(e);
             }
+        } catch (Exception e) {
+            LOGGER.error("Error reading sql file", e);
+            throw new RuntimeException(e);
         }
     }
 
-    private Set<Statement> getStatements(Properties properties,
-                                         BufferedReader bufferedReader,
-                                         Set<Statement> statements) throws IOException {
+    private Set<Statement> getStatements(Properties properties, BufferedReader bufferedReader) throws IOException {
         StringBuilder resultBuilder = new StringBuilder();
         String line;
         StatementType currentStatementType = null;
+        Set<Statement> statementSet = new LinkedHashSet<>();
         while ((line = bufferedReader.readLine()) != null) {
-            if (!line.trim().isEmpty() && !line.trim().startsWith("--")) {
+            if (!line.trim().isEmpty() &&
+                !line.trim().startsWith("--") &&
+                !line.trim().startsWith("/*") &&
+                !line.trim().startsWith("*")) {
                 currentStatementType = determineStatementType(line, currentStatementType);
                 String tplLine = line;
                 for (Object key : properties.keySet()) {
@@ -50,11 +62,11 @@ public class SqlExtractor {
                                     properties.getProperty(key.toString()));
                 }
                 resultBuilder.append(tplLine);
-                if (line.endsWith(";;")) {
+                if (line.endsWith(";")) {
                     if (currentStatementType == null) {
                         throw new RuntimeException("Error parsing SQL: " + resultBuilder);
                     }
-                    statements.add(new Statement(resultBuilder.toString(), currentStatementType));
+                    statementSet.add(new Statement(resultBuilder.toString(), currentStatementType));
                     currentStatementType = null;
                     resultBuilder = new StringBuilder();
                 } else {
@@ -62,7 +74,7 @@ public class SqlExtractor {
                 }
             }
         }
-        return statements;
+        return statementSet;
     }
 
     private InputStream getSqlFileInputStream(String sqlFileName) throws URISyntaxException {
