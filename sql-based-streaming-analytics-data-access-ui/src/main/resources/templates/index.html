@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SQL based streaming analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col-8">
+            <h1>SQL based streaming analytics</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <h5>Status:</h5>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-auto" id="randomEnabled" th:if="${randomDataGenerationEnabled}">
+            <span class="badge text-bg-success">Random data generation is enabled</span>
+        </div>
+        <div class="col-auto" id="randomDisabled" th:if="${!randomDataGenerationEnabled}">
+            <span class="badge text-bg-danger">Random data generation is disabled</span>
+        </div>
+        <div class="col-auto" id="wsConnected" style="display: none">
+            <span class="badge text-bg-success">Connected to WebSocket</span>
+        </div>
+        <div class="col-auto" id="wsNotConnected">
+            <span class="badge text-bg-danger">Not connected to WebSocket</span>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col">
+            <h5>Available MSF applications:</h5>
+        </div>
+    </div>
+    <div class="row row-cols-1 row-cols-3 g-4">
+        <div class="col" th:each="msfApp: ${msfApplicationList}">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${msfApp.getApplicationName()}"></h5>
+                    <span class="badge rounded-pill text-bg-primary"
+                          th:text="${msfApp.getApplicationStatusAsString()}"></span>
+                </div>
+                <div class="card-footer">
+                    <div class="btn-group">
+                        <button class="btn btn-success" th:data-app="${msfApp.applicationName}"
+                                onclick="startMsfApplication(this.getAttribute('data-app'))">Start MSF application
+                            <button class="btn btn-danger" th:data-app="${msfApp.applicationName}"
+                                    onclick="stopMsfApplication(this.getAttribute('data-app'))">Stop MSF application
+                            </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col">
+            <div class="accordion" id="accordionData">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseInput" aria-expanded="true" aria-controls="collapseInput">
+                            Data generator
+                        </button>
+                    </h2>
+                    <div id="collapseInput" class="accordion-collapse collapse" data-bs-parent="#accordionData">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <div class="col">
+                                    <label for="numRequestsPer2Seconds">Number of records per 2 seconds</label>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <input type="number" id="numRequestsPer2Seconds" value="10">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <label for="partitionKeyValue">Partition-Key</label>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <input type="text" id="partitionKeyValue" value="${customer.id}">
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col">
+                                    <div id="inputDataJsonEditor"></div>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-auto">
+                                    <input type="checkbox" id="fakerForPartitionKey" checked>
+                                </div>
+                                <div class="col-auto">
+                                    <label for="fakerForPartitionKey">Use faker for partition key</label>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-auto">
+                                    <input type="checkbox" id="fakerForData" checked>
+                                </div>
+                                <div class="col-auto">
+                                    <label for="fakerForData">Use faker for data</label>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col">
+                                    <button class="btn btn-primary" th:if="${!randomDataGenerationEnabled}"
+                                            onclick="toggleDataGeneration()">Start data
+                                        generation
+                                    </button>
+                                    <button class="btn btn-danger" th:if="${randomDataGenerationEnabled}"
+                                            onclick="toggleDataGeneration()">Stop data
+                                        generation
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseOutput" aria-expanded="true" aria-controls="collapseOutput">
+                            Data output
+                        </button>
+                    </h2>
+                    <div id="collapseOutput" class="accordion-collapse collapse" data-bs-parent="#accordionData">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <div class="col">
+                                    <ul class="list-group list-group-flush" id="outputContainer">
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+        crossorigin="anonymous"></script>
+<script type="module">
+    import {JSONEditor} from 'https://cdn.jsdelivr.net/npm/vanilla-jsoneditor/index.js'
+
+    document.jsonContent = {
+        text: undefined,
+        json: {
+            customerId: 5678,
+            customerName: "John Foo",
+            productId: 1234,
+            productName: "Lego"
+        }
+    }
+
+    const editor = new JSONEditor({
+        target: document.getElementById('inputDataJsonEditor'),
+        props: {
+            content: document.jsonContent,
+            onChange: (updatedContent, previousContent, {contentErrors, patchResult}) => {
+                document.jsonContent = updatedContent
+            }
+        }
+    })
+</script>
+<script type="text/javascript">
+    function toggleDataGeneration() {
+        let request = {};
+        request.partitionKey = $('#partitionKeyValue').val()
+        request.fakerForPartitionKey = $('#fakerForPartitionKey').attr('checked') === 'true'
+        if (document.jsonContent.json) {
+            request.data = JSON.stringify(document.jsonContent.json);
+        } else {
+            request.data = document.jsonContent.text;
+        }
+        request.fakerForData = $('#fakerForData').attr('checked') === 'true'
+        request.numRequestsPer2Seconds = $('#numRequestsPer2Seconds').val()
+        const req = new XMLHttpRequest();
+        req.open("POST", "/api/dataGeneration/toggle");
+        req.onreadystatechange = function () {
+            window.location.reload();
+        }
+        req.setRequestHeader("Content-Type", "application/json")
+        req.send(JSON.stringify(request));
+    }
+
+    function stopMsfApplication(applicationName) {
+        const req = new XMLHttpRequest();
+        req.open("POST", "/api/msfApplication/stop/" + applicationName);
+        req.onreadystatechange = function () {
+            window.location.reload();
+        }
+        req.send(JSON.stringify(applicationName));
+    }
+
+    function startMsfApplication(applicationName) {
+        const req = new XMLHttpRequest();
+        req.open("POST", "/api/msfApplication/start/" + applicationName);
+        req.onreadystatechange = function () {
+            window.location.reload();
+        }
+        req.send(JSON.stringify(applicationName));
+    }
+
+    window.onload = function connectToWs() {
+        const location = window.location;
+        const ws = new WebSocket('ws://' + location.host + '/outputStream');
+        const eventContainer = $("#outputContainer");
+        ws.onopen = function () {
+            document.getElementById("wsConnected").style.removeProperty("display");
+            document.getElementById("wsNotConnected").style.display = "none";
+            setInterval(function () {
+                ws.send('skipABeat');
+            }, 5000);
+        }
+        ws.onclose = function () {
+            document.getElementById("wsNotConnected").style.removeProperty("display");
+            document.getElementById("wsConnected").style.display = "none";
+        }
+        ws.onmessage = function (data) {
+            const listElement = document.createElement("li");
+            const dataParagraph = document.createElement("p");
+            dataParagraph.append(data.data);
+            const timeParagraph = document.createElement("p");
+            timeParagraph.append("Received at " + new Date());
+            const divElement = document.createElement("div");
+            divElement.append(dataParagraph);
+            divElement.append(timeParagraph);
+            listElement.append(divElement);
+            listElement.className = "list-group-item";
+            if (eventContainer.children().length > 3) {
+                eventContainer.children().last().remove();
+            }
+            eventContainer.prepend(listElement);
+        }
+    }
+</script>
+</body>
+</html>

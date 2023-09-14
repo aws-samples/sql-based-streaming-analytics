@@ -10,8 +10,8 @@ on:
     branches: [ 'main' ]
 
 jobs:
-  build:
-    name: Build and release on commit to main branch
+  build_flink_job:
+    name: Build and release Apache Flink Job on commit to dev branch
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,15 +22,41 @@ jobs:
           java-version: '11'
           distribution: 'corretto'
           cache: maven
-      - name: Build with Maven
+      - name: Build Apache Flink Job with Maven
         run: mvn -f sql-based-streaming-analytics-flink-job/pom.xml --batch-mode --update-snapshots verify
-      - name: Extract Maven project version
-        run: echo MAVEN_PROJECT_VERSION=$(mvn -f sql-based-streaming-analytics-flink-job/pom.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec) >> "$GITHUB_OUTPUT"
-        id: extract_maven_version
-      - name: release
+      - name: Prerelease data access UI
         uses: ncipollo/release-action@v1
         with:
           artifacts: "sql-based-streaming-analytics-flink-job/target/sql-based-streaming-analytics-flink-job.jar"
           bodyFile: "CHANGELOG.md"
-          prerelease: false
-          tag: ${{ steps.extract_maven_version.outputs.MAVEN_PROJECT_VERSION }}
+          prerelease: true
+          allowUpdates: true
+          repo: "release"
+          replacesArtifacts: true
+          token: ${{ secrets.RELEASE_GH_TOKEN }}
+          tag: "MAIN"
+  build_data_access_ui:
+    name: Build and release data access UI on commit to dev branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+          cache: maven
+      - name: Build data access UI with Maven
+        run: mvn -f sql-based-streaming-analytics-data-access-ui/pom.xml --batch-mode --update-snapshots verify
+      - name: Prerelease data access UI
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "sql-based-streaming-analytics-data-access-ui/target/sql-based-streaming-analytics-data-access-ui.jar"
+          bodyFile: "CHANGELOG.md"
+          prerelease: true
+          allowUpdates: true
+          repo: "release"
+          replacesArtifacts: true
+          token: ${{ secrets.RELEASE_GH_TOKEN }}
+          tag: "MAIN"

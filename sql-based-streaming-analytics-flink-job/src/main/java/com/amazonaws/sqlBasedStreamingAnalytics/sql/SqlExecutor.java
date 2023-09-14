@@ -27,7 +27,7 @@ public class SqlExecutor {
                 case CREATE:
                 case SELECT:
                     try {
-                        tableEnv.executeSql(statementSql.replaceAll(";;", ""));
+                        tableEnv.executeSql(statementSql.replaceAll(";", ""));
                     } catch (RuntimeException e) {
                         LOGGER.error("Error creating select statement " + statementSql, e);
                         throw e;
