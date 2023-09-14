@@ -85,7 +85,7 @@ export class FullSolutionStack extends cdk.Stack {
         const optionSettingProperties = this.createAppOptionSettings(kclCheckpointDynamoTable, instanceProfileName);
         let cfnEnvironment = new elasticbeanstalk.CfnEnvironment(this, 'Environment', {
             applicationName: app.applicationName || appName,
-            solutionStackName: '64bit Amazon Linux 2023 v4.0.0 running Corretto 17',
+            solutionStackName: '64bit Amazon Linux 2023 v4.0.1 running Corretto 17',
             optionSettings: optionSettingProperties,
             versionLabel: appVersionProps.ref,
         });
