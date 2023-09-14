@@ -21,10 +21,6 @@ export class FullSolutionStack extends cdk.Stack {
 
     constructor(scope: Construct, id: string, props: FullSolutionProps) {
         super(scope, id, props);
-        props.msfApplications.forEach(app => {
-            props.inputStream.grantReadWrite(app)
-            props.outputStream.grantReadWrite(app)
-        })
         this.props = props;
     }
 

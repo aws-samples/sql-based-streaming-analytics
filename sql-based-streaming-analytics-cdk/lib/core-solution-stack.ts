@@ -51,6 +51,12 @@ export class CoreSolutionStack extends cdk.Stack {
                 removalPolicy: RemovalPolicy.DESTROY
             }
         );
+        if (this.props.inputStream) {
+            this.props.inputStream.grantReadWrite(application)
+        }
+        if (this.props.outputStream) {
+            this.props.outputStream.grantReadWrite(application)
+        }
         Tags.of(application).add("application", "sqlBasedStreamingAnalytics");
         this.msfApplications.push(application)
         sqlFileBucket.grantRead(application)
