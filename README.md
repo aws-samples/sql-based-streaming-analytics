@@ -42,7 +42,7 @@ cdk deploy --all
 ## Getting started using the full-solution
 After installing the full solution you find the URL of the deployed web application in your command line outputs. After clicking that link a browser should open and you should be able to explore the DataAcccessUi.
 On the top of the page you see some status badges. One giving you information if the Random Data Generator is running the other one showing you if you're connected to the WebSocket (used for pushing new elements on the output Kinesis Data Stream).
-To simply try out the solution click on the `Start MSF application` of the `simpleSqlMsfApplication*` Apache Flink job.
+To simply try out the solution click on the `Start MSF application` of the `simpleSqlMsfApplication*` Apache Flink job. Starting the Apache Flink job takes approximately 2-3 minutes. During this time you can simply reload the web page and look at the status badge of the application. 
 After the Apache Flink job running on Amazon MSF is started you see a `Running` badge inside the `simpleSqlMsfApplication*` card.
 Now just start the random data generation by expanding the `Data generator` box and click on `Start data generation`.
 After expanding the `Data output` box you should see entries coming in. These have been processed by the Apache Flink job which is executing the `simpleSql.sql` file out of the `sql` folder.
