@@ -34,7 +34,7 @@ CREATE TABLE orderOut
     window_start TIMESTAMP(3),
     window_end TIMESTAMP(3),
     customerId INT,
-    orderCount INT
+    orderCount BIGINT
 ) PARTITIONED BY (customerId)
 WITH (
 'connector' = 'kinesis',
