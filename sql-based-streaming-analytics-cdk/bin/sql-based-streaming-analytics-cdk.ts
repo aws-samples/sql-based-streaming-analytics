@@ -10,7 +10,7 @@ import {FullSolutionBaseStack} from "../lib/full-solution-base-stack";
 async function main() {
     const app = new cdk.App();
     let fullSolutionBaseStack = new FullSolutionBaseStack(app, 'SqlBasedStreamingAnalyticsFullSolutionBaseStack', {});
-    let coreSolutionStack = new CoreSolutionStack(app, 'SqlBasedStreamingAnalyticsKdaStack', {
+    let coreSolutionStack = new CoreSolutionStack(app, 'SqlBasedStreamingAnalyticsCoreSolutionStack', {
         inputStream: fullSolutionBaseStack.kinesisInputStream,
         outputStream: fullSolutionBaseStack.kinesisOutputStream
     });
@@ -19,7 +19,7 @@ async function main() {
     } catch (e) {
         console.error("Error: ", e)
     }
-    let fullSolutionStack = new FullSolutionStack(app, 'SqlBasedStreamingAnalyticsElasticBeanstalkStack', {
+    let fullSolutionStack = new FullSolutionStack(app, 'SqlBasedStreamingAnalyticsFullSolutionStack', {
         inputStream: fullSolutionBaseStack.kinesisInputStream,
         outputStream: fullSolutionBaseStack.kinesisOutputStream,
         msfApplications: coreSolutionStack.msfApplications
