@@ -1,13 +1,17 @@
 import * as cdk from 'aws-cdk-lib';
 import {RemovalPolicy, Stack, Tags} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
-import {Stream, StreamMode} from "aws-cdk-lib/aws-kinesis";
+import {Stream} from "aws-cdk-lib/aws-kinesis";
 import * as kda from "@aws-cdk/aws-kinesisanalytics-flink-alpha";
 import {Application} from "@aws-cdk/aws-kinesisanalytics-flink-alpha";
-import {Bucket} from "aws-cdk-lib/aws-s3";
+import {Bucket, EventType} from "aws-cdk-lib/aws-s3";
 import {BucketDeployment, Source} from "aws-cdk-lib/aws-s3-deployment";
 import * as fr from "follow-redirects";
 import fs from "fs";
+import {NodejsFunction} from "aws-cdk-lib/aws-lambda-nodejs";
+import {S3EventSource} from "aws-cdk-lib/aws-lambda-event-sources";
+import * as iam from "aws-cdk-lib/aws-iam";
+import {LogGroup, RetentionDays} from "aws-cdk-lib/aws-logs";
 
 interface CoreSolutionStackProps extends cdk.StackProps {
     inputStream?: Stream
@@ -27,7 +31,7 @@ export class CoreSolutionStack extends cdk.Stack {
     async startResourceCreation() {
         await this.fileDownload()
         const bucket = this.createSqlFileBucket();
-        this.uploadSqlFiles(bucket)
+        const bucketDeployment = this.uploadSqlFiles(bucket)
         fs.readdir(`${__dirname}/../../sql`, (err, files) => {
             if (err) {
                 return console.log('Unable to scan directory: ' + err);
@@ -37,6 +41,36 @@ export class CoreSolutionStack extends cdk.Stack {
                 this.createMsfApplication(file.replace(".sql", ""), s3Url, bucket);
             }
         });
+        const lambda = this.createRestartMsfApplicationLambda();
+        this.msfApplications.forEach(app => {
+            lambda.node.addDependency(app)
+            lambda.node.addDependency(bucketDeployment)
+        })
+
+        lambda.addEventSource(new S3EventSource(
+                bucket, {
+                    events: [EventType.OBJECT_CREATED],
+                    filters: [
+                        {
+                            suffix: ".sql"
+                        }
+                    ]
+                }
+            )
+        )
+        lambda.addToRolePolicy(new iam.PolicyStatement({
+            actions: ["kinesisanalytics:ListApplications"],
+            resources: ["*"],
+            effect: iam.Effect.ALLOW,
+        }));
+        lambda.addToRolePolicy(new iam.PolicyStatement({
+            actions: [
+                "kinesisanalytics:UpdateApplication",
+                "kinesisanalytics:DescribeApplication"
+            ],
+            resources: ["*"],
+            effect: iam.Effect.ALLOW,
+        }));
     }
 
     private createMsfApplication(sqlFile: string, s3Url: string, sqlFileBucket: Bucket) {
@@ -86,7 +120,7 @@ export class CoreSolutionStack extends cdk.Stack {
     }
 
     private uploadSqlFiles(bucket: Bucket) {
-        new BucketDeployment(this, "SqlFileDeployment", {
+        return new BucketDeployment(this, "SqlFileDeployment", {
             sources: [Source.asset(`${__dirname}/../../sql`)],
             destinationBucket: bucket
         });
@@ -108,4 +142,13 @@ export class CoreSolutionStack extends cdk.Stack {
         })
     }
 
+    private createRestartMsfApplicationLambda() {
+        let nodejsFunction = new NodejsFunction(this, "restartMsfApplicationLambda");
+        new LogGroup(this, 'restart-msf-lambda-log-group', {
+            logGroupName: `/aws/lambda/${nodejsFunction.functionName}`,
+            removalPolicy: RemovalPolicy.DESTROY,
+            retention: RetentionDays.ONE_WEEK,
+        })
+        return nodejsFunction;
+    }
 }
