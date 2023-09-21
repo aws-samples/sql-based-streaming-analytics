@@ -1,92 +1,129 @@
-# reusable-asset-sql-based-streaming-analytics
+# SQL based streaming analytics using Apache Flink running on Amazon Managed Service for Apache Flink
 
+## Problem statement
+Getting streaming analytics right is a big challenge for many organisations. Not only do you need a background in general data science you also need to have a good understanding of the data you want to analyze and the requirements that are leading to the need of streaming analytics. On top of that developers need to learn the Apache Flink DataStreamAPI. This solutions enabled business analysts - which often are knowledgeable in SQL - to write SQL based streaming analytics applications based on Apache Flink. This opens up the field of streaming analytics to a much broader audience. 
 
+## Solution description
+This solution demonstrates how to perform streaming analytics using a SQL file. Center to this solution is Apache Flink. The `sql-based-streaming-analytics-flink-job` is a generic Apache Flink job which retrieves a SQL file from a S3 Bucket on startup. Afterwards the SQL file is being parsed and submitted to the Apache Flink Environment. Using a Lambda trigger the Apache Flink job is being restarted whenever a SQL file in the S3 Bucket is being changed.
 
-## Getting started
+When installing this solution you have two choices:
+* Install only the core solution which creates:
+  * S3 Bucket containing all the SQL files found in the `sql` folder
+  * One Apache Flink job running on Amazon Managed Service for Apache Flink (Amazon MSF) for every SQL file in the `sql` folder
+  * Lambda which is triggered whenever a SQL file in the bucket is being changed
+* Install the full solution which includes:
+  * All elements of the core solution
+  * Kinesis Data Stream which is used as an input stream for the Apache Flink Job 
+  * Kinesis Data Stream which is used as an output stream for the Apache Flink Job
+  * An ElasticBeanstalk application providing a web interface to:
+    * Generate and write sample data into the input stream
+    * Read from the output stream
+    * See the status of the Apache Flink jobs 
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+The generic Apache Flink job is available as a GitHub Release from this repository. Prior to deploying the CDK code it is being downloaded.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Core Solution architecture
+![](assets/coreSolution.png "Core solution architecture")
 
-## Add your files
+## Full Solution architecture
+![](assets/fullSolution.png "Full solution architecture")
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+## Install the core solution
+After cloning the repository change into the `sql-based-streaming-analytics-cdk`directory and simply run the following command:
 
+```shell
+cdk deploy core-solution-stack
 ```
-cd existing_repo
-git remote add origin https://gitlab.aws.dev/jwthewes/reusable-asset-sql-based-streaming-analytics.git
-git branch -M main
-git push -uf origin main
+
+## Install the full solution
+After cloning the repository change into the `sql-based-streaming-analytics-cdk`directory and simply run the following command:
+
+```shell
+cdk deploy --all
 ```
 
-## Integrate with your tools
+## Getting started using the full-solution
+After installing the full solution you find the URL of the deployed web application in your command line outputs. After clicking that link a browser should open and you should be able to explore the DataAcccessUi.
+On the top of the page you see some status badges. One giving you information if the Random Data Generator is running the other one showing you if you're connected to the WebSocket (used for pushing new elements on the output Kinesis Data Stream).
+To simply try out the solution click on the `Start MSF application` of the `simpleSqlMsfApplication*` Apache Flink job. Starting the Apache Flink job takes approximately 2-3 minutes. During this time you can simply reload the web page and look at the status badge of the application. 
+After the Apache Flink job running on Amazon MSF is started you see a `Running` badge inside the `simpleSqlMsfApplication*` card.
+Now just start the random data generation by expanding the `Data generator` box and click on `Start data generation`.
+After expanding the `Data output` box you should see entries coming in. These have been processed by the Apache Flink job which is executing the `simpleSql.sql` file out of the `sql` folder.
 
-- [ ] [Set up project integrations](https://gitlab.aws.dev/jwthewes/reusable-asset-sql-based-streaming-analytics/-/settings/integrations)
+### Modifying the random data generator
+The random data generator is based on the [Datafaker](https://www.datafaker.net/) library. Therefore you can use any of the supported expressions inside your message. Please consult the [Datafaker documentation](https://www.datafaker.net/documentation/getting-started/) for more information on [Datafaker expressions](https://www.datafaker.net/documentation/expressions/).
+If you don't want to use Datafaker for your body or your partition key value make sure to uncheck the checkboxes accordingly.
+If you want to reference a value of your JSON message to use as a partion key value you can use the [JSON pointer notation](https://www.rfc-editor.org/rfc/rfc6901). These follows an approach known from filesystems.
+Given the following JSON object
 
-## Collaborate with your team
+```json
+{
+  "customer": {
+    "name": "John",
+    "lastname": "Doe",
+    "address": {
+      "city": "Downtown",
+      "zip": 12345
+    }
+  }
+}
+```
+you can access the city using this JSON pointer:
+`/customer/address/city`
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+### Automatically apply a changes SQL
+To update the Apache Flink application running on Amazon MSF this solution has an update mechanism built in. 
+Let's imagine we want to display not only the productId but also the productName within the simpleSql job.
+We can change the SQL file to this:
+``` sql
+/*
+ * Copyright 2023 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance
+ * with the License. A copy of the License is located at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * or in the 'license' file accompanying this file. This file is distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES
+ * OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ *
+ *
+ */
 
-## Test and Deploy
+CREATE TABLE orderIn
+(
+    customerId   INT,
+    customerName VARCHAR(800),
+    productId    INT,
+    productName  VARCHAR(800),
+    eventTime_ltz AS PROCTIME()
+) PARTITIONED BY (customerId)
+WITH (
+'connector' = 'kinesis',
+'stream' = '##INPUT_STREAM_NAME##',
+'aws.region' = '##REGION##',
+'scan.stream.initpos' = 'LATEST',
+'format' = 'json',
+'json.timestamp-format.standard' = 'ISO-8601');
 
-Use the built-in continuous integration in GitLab.
+CREATE TABLE orderOut
+(
+    customerId INT,
+    productId  INT,
+    productName VARCHAR(800)
+) PARTITIONED BY (customerId)
+WITH (
+'connector' = 'kinesis',
+'stream' = '##OUTPUT_STREAM_NAME##',
+'aws.region' = '##REGION##',
+'format' = 'json',
+'json.timestamp-format.standard' = 'ISO-8601');
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+INSERT INTO orderOut
+SELECT customerId, productId, productName
+FROM orderIn;
+```
 
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+If you switch to your Amazon S3 Bucket named `sqlbasedstreaminganalyticsc-sqlfilebucket...` in your AWS Console you can see the all the SQL files in the bucket which are also in the `sql` folder of this project. Inside the AWS console you can click on `Upload` and upload the updated simpleSql.sql file.
+The upload triggers the `restartMsfApplication`-Lambda which updates the Amazon MSF application. You can check the status of the application updating inside the AWS Console by looking at the Managed Apache Flink service page or inside the deployed DataAccessUi.
