@@ -1,6 +1,9 @@
 package com.amazonaws.sqlbasedstreaminganalytics.sqlBasedStreamingAnalyticsDataAccessUi.service;
 
 import com.amazonaws.sqlbasedstreaminganalytics.sqlBasedStreamingAnalyticsDataAccessUi.config.DataAccessUiConfigurationProperties;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.datafaker.Faker;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -16,15 +19,19 @@ import java.util.List;
 @Service
 public class KinesisProducerService {
 
-    private final KinesisClient kinesisClient = KinesisClient.builder().httpClient(UrlConnectionHttpClient.builder().build()).build();
+    private final KinesisClient
+            kinesisClient =
+            KinesisClient.builder().httpClient(UrlConnectionHttpClient.builder().build()).build();
     private final DataAccessUiConfigurationProperties dataAccessUiConfigurationProperties;
     private final Faker faker = new Faker();
     private String partitionKeyValue = "a";
     private boolean useFakerForPartitionKeyValue = false;
+    private boolean useJsonPointerForPartitionKeyValue = false;
     private String body = "";
     private boolean useFakerForBody = false;
     private int recordsToGenerateEvery2Seconds = 1;
     private boolean generatingRecordsRunning = false;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public KinesisProducerService(DataAccessUiConfigurationProperties dataAccessUiConfigurationProperties) {
         this.dataAccessUiConfigurationProperties = dataAccessUiConfigurationProperties;
@@ -32,11 +39,13 @@ public class KinesisProducerService {
 
     public void startGeneratingRecords(String partitionKeyValue,
                                        boolean useFakerForPartitionKeyValue,
+                                       boolean useJsonPointerForPartitionKeyValue,
                                        String body,
                                        boolean useFakerForBody,
                                        int recordsToGenerateEvery2Seconds) {
         this.partitionKeyValue = partitionKeyValue;
         this.useFakerForPartitionKeyValue = useFakerForPartitionKeyValue;
+        this.useJsonPointerForPartitionKeyValue = useJsonPointerForPartitionKeyValue;
         this.body = body;
         this.useFakerForBody = useFakerForBody;
         this.recordsToGenerateEvery2Seconds = recordsToGenerateEvery2Seconds;
@@ -82,15 +91,22 @@ public class KinesisProducerService {
 
     private PutRecordsRequestEntry generateRecordEntry() {
         PutRecordsRequestEntry.Builder recordEntryBuilder = PutRecordsRequestEntry.builder();
+        String recordData = body;
+        if (useFakerForBody) {
+            recordData = faker.expression(body);
+        }
+        recordEntryBuilder = recordEntryBuilder.data(SdkBytes.fromUtf8String(recordData));
         if (useFakerForPartitionKeyValue) {
             recordEntryBuilder = recordEntryBuilder.partitionKey(faker.expression(partitionKeyValue));
+        } else if (useJsonPointerForPartitionKeyValue) {
+            try {
+                JsonNode jsonNode = objectMapper.readValue(recordData, JsonNode.class);
+                recordEntryBuilder = recordEntryBuilder.partitionKey(jsonNode.at(partitionKeyValue).asText());
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
         } else {
             recordEntryBuilder = recordEntryBuilder.partitionKey(partitionKeyValue);
-        }
-        if (useFakerForBody) {
-            recordEntryBuilder = recordEntryBuilder.data(SdkBytes.fromUtf8String(faker.expression(body)));
-        } else {
-            recordEntryBuilder = recordEntryBuilder.data(SdkBytes.fromUtf8String(body));
         }
         return recordEntryBuilder.build();
     }

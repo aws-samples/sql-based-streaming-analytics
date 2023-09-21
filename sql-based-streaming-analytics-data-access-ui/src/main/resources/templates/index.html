@@ -88,7 +88,7 @@
                             </div>
                             <div class="row">
                                 <div class="col">
-                                    <input type="text" id="partitionKeyValue" value="${customer.id}">
+                                    <input type="text" id="partitionKeyValue" value="/customerId">
                                 </div>
                             </div>
                             <div class="row mt-2">
@@ -98,10 +98,18 @@
                             </div>
                             <div class="row mt-2">
                                 <div class="col-auto">
-                                    <input type="checkbox" id="fakerForPartitionKey" checked>
+                                    <input type="checkbox" id="fakerForPartitionKey">
                                 </div>
                                 <div class="col-auto">
                                     <label for="fakerForPartitionKey">Use faker for partition key</label>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-auto">
+                                    <input type="checkbox" id="jsonPointerForPartitionKey" checked>
+                                </div>
+                                <div class="col-auto">
+                                    <label for="jsonPointerForPartitionKey">Use JSON pointer for partition key</label>
                                 </div>
                             </div>
                             <div class="row mt-2">
@@ -161,10 +169,10 @@
     document.jsonContent = {
         text: undefined,
         json: {
-            customerId: 5678,
-            customerName: "John Foo",
-            productId: 1234,
-            productName: "Lego"
+            customerId: "#{numerify '###'}",
+            customerName: "#{Name.full_name}",
+            productId: "#{numerify '###'}",
+            productName: "#{Brand.sport}"
         }
     }
 
@@ -182,13 +190,14 @@
     function toggleDataGeneration() {
         let request = {};
         request.partitionKey = $('#partitionKeyValue').val()
-        request.fakerForPartitionKey = $('#fakerForPartitionKey').attr('checked') === 'true'
+        request.fakerForPartitionKey = $('#fakerForPartitionKey').is(':checked')
+        request.jsonPointerForPartitionKey = $('#jsonPointerForPartitionKey').is(':checked')
         if (document.jsonContent.json) {
             request.data = JSON.stringify(document.jsonContent.json);
         } else {
             request.data = document.jsonContent.text;
         }
-        request.fakerForData = $('#fakerForData').attr('checked') === 'true'
+        request.fakerForData = $('#fakerForData').is(':checked')
         request.numRequestsPer2Seconds = $('#numRequestsPer2Seconds').val()
         const req = new XMLHttpRequest();
         req.open("POST", "/api/dataGeneration/toggle");
