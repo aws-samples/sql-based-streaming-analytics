@@ -1,5 +1,8 @@
 # SQL based streaming analytics using Apache Flink running on Amazon Managed Service for Apache Flink
 
+## Problem statement
+Getting streaming analytics right is a big challenge for many organisations. Not only do you need a background in general data science you also need to have a good understanding of the data you want to analyze and the requirements that are leading to the need of streaming analytics. On top of that developers need to learn the Apache Flink DataStreamAPI. This solutions enabled business analysts - which often are knowledgeable in SQL - to write SQL based streaming analytics applications based on Apache Flink. This opens up the field of streaming analytics to a much broader audience. 
+
 ## Solution description
 This solution demonstrates how to perform streaming analytics using a SQL file. Center to this solution is Apache Flink. The `sql-based-streaming-analytics-flink-job` is a generic Apache Flink job which retrieves a SQL file from a S3 Bucket on startup. Afterwards the SQL file is being parsed and submitted to the Apache Flink Environment. Using a Lambda trigger the Apache Flink job is being restarted whenever a SQL file in the S3 Bucket is being changed.
 
