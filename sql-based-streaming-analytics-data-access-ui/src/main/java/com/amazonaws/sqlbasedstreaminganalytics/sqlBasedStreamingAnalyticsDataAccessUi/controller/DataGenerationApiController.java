@@ -37,7 +37,7 @@ public class DataGenerationApiController {
             kinesisProducerService.stopGeneratingRecords();
         } else {
             kinesisProducerService.startGeneratingRecords(dataGenerationRequest.partitionKey(),
-                    dataGenerationRequest.fakerForPartitionKey(), dataGenerationRequest.data(),
+                    dataGenerationRequest.fakerForPartitionKey(), dataGenerationRequest.jsonPointerForPartitionKey(), dataGenerationRequest.data(),
                     dataGenerationRequest.fakerForData(), dataGenerationRequest.numRequestsPer2Seconds());
             System.out.println(dataGenerationRequest);
         }

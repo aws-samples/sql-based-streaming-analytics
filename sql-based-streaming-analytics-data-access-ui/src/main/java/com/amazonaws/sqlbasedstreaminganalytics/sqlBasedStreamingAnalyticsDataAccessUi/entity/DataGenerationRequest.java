@@ -19,5 +19,6 @@ public record DataGenerationRequest(String partitionKey,
                                     String data,
                                     boolean fakerForData,
                                     boolean fakerForPartitionKey,
+                                    boolean jsonPointerForPartitionKey,
                                     int numRequestsPer2Seconds) {
 }

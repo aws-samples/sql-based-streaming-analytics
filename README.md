@@ -50,6 +50,27 @@ After the Apache Flink job running on Amazon MSF is started you see a `Running` 
 Now just start the random data generation by expanding the `Data generator` box and click on `Start data generation`.
 After expanding the `Data output` box you should see entries coming in. These have been processed by the Apache Flink job which is executing the `simpleSql.sql` file out of the `sql` folder.
 
+### Modifying the random data generator
+The random data generator is based on the [Datafaker](https://www.datafaker.net/) library. Therefore you can use any of the supported expressions inside your message. Please consult the [Datafaker documentation](https://www.datafaker.net/documentation/getting-started/) for more information on [Datafaker expressions](https://www.datafaker.net/documentation/expressions/).
+If you don't want to use Datafaker for your body or your partition key value make sure to uncheck the checkboxes accordingly.
+If you want to reference a value of your JSON message to use as a partion key value you can use the [JSON pointer notation](https://www.rfc-editor.org/rfc/rfc6901). These follows an approach known from filesystems.
+Given the following JSON object
+
+```json
+{
+  "customer": {
+    "name": "John",
+    "lastname": "Doe",
+    "address": {
+      "city": "Downtown",
+      "zip": 12345
+    }
+  }
+}
+```
+you can access the city using this JSON pointer:
+`/customer/address/city`
+
 ### Automatically apply a changes SQL
 To update the Apache Flink application running on Amazon MSF this solution has an update mechanism built in. 
 Let's imagine we want to display not only the productId but also the productName within the simpleSql job.
