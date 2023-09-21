@@ -9,6 +9,7 @@ import * as fs from "fs";
 import {Stream} from 'aws-cdk-lib/aws-kinesis'
 import {AttributeType, Table} from "aws-cdk-lib/aws-dynamodb";
 import {Application} from "@aws-cdk/aws-kinesisanalytics-flink-alpha";
+import {IpAddresses, IVpc, SubnetType, Vpc} from "aws-cdk-lib/aws-ec2";
 
 interface FullSolutionProps extends cdk.StackProps {
     inputStream: Stream
@@ -82,7 +83,8 @@ export class FullSolutionStack extends cdk.Stack {
                 ebIamRole.roleName
             ]
         });
-        const optionSettingProperties = this.createAppOptionSettings(kclCheckpointDynamoTable, instanceProfileName);
+        const vpc = this.createDataAccessUiVpcAndSubnets()
+        const optionSettingProperties = this.createAppOptionSettings(kclCheckpointDynamoTable, vpc, instanceProfileName);
         let cfnEnvironment = new elasticbeanstalk.CfnEnvironment(this, 'Environment', {
             applicationName: app.applicationName || appName,
             solutionStackName: '64bit Amazon Linux 2023 v4.0.1 running Corretto 17',
@@ -97,8 +99,23 @@ export class FullSolutionStack extends cdk.Stack {
         });
     }
 
-    private createAppOptionSettings(kclCheckpointDynmaoTable: Table, instanceProfileName?: string) {
+    private createAppOptionSettings(kclCheckpointDynmaoTable: Table, vpc: IVpc, instanceProfileName?: string) {
         const optionSettingProperties: elasticbeanstalk.CfnEnvironment.OptionSettingProperty[] = [
+            {
+                namespace: 'aws:ec2:vpc',
+                optionName: 'VPCId',
+                value: vpc.vpcId,
+            },
+            {
+                namespace: 'aws:ec2:vpc',
+                optionName: 'ELBSubnets',
+                value: vpc.selectSubnets({subnetType: SubnetType.PUBLIC}).subnetIds.join(",")
+            },
+            {
+                namespace: 'aws:ec2:vpc',
+                optionName: 'Subnets',
+                value: vpc.selectSubnets({subnetType: SubnetType.PRIVATE_WITH_EGRESS}).subnetIds.join(",")
+            },
             {
                 namespace: 'aws:autoscaling:launchconfiguration',
                 optionName: 'IamInstanceProfile',
@@ -107,7 +124,22 @@ export class FullSolutionStack extends cdk.Stack {
             {
                 namespace: 'aws:elasticbeanstalk:environment',
                 optionName: 'EnvironmentType',
-                value: 'SingleInstance',
+                value: 'LoadBalanced',
+            },
+            {
+                namespace: 'aws:elasticbeanstalk:environment',
+                optionName: 'LoadBalancerType',
+                value: 'application',
+            },
+            {
+                namespace: "aws:autoscaling:asg",
+                optionName: "MinSize",
+                value: "1"
+            },
+            {
+                namespace: "aws:autoscaling:asg",
+                optionName: "MaxSize",
+                value: "1"
             },
             {
                 namespace: 'aws:ec2:instances',
@@ -163,4 +195,27 @@ export class FullSolutionStack extends cdk.Stack {
             removalPolicy: RemovalPolicy.DESTROY
         })
     }
+
+    private createDataAccessUiVpcAndSubnets() {
+        return new Vpc(this, "DataAccessUiVpc", {
+            maxAzs: 2,
+            enableDnsHostnames: true,
+            enableDnsSupport: true,
+            ipAddresses: IpAddresses.cidr("10.0.0.0/16"),
+            natGateways: 1,
+            subnetConfiguration: [
+                {
+                    cidrMask: 24,
+                    subnetType: SubnetType.PUBLIC,
+                    name: "DataAccessUiPublicSubnet"
+                },
+                {
+                    cidrMask: 24,
+                    subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+                    name: "DataAccessUiPrivateSubnet"
+                },
+            ],
+        })
+    }
+
 }
