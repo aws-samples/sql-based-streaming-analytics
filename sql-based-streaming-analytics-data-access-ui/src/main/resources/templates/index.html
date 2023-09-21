@@ -50,9 +50,10 @@
                     <div class="btn-group">
                         <button class="btn btn-success" th:data-app="${msfApp.applicationName}"
                                 onclick="startMsfApplication(this.getAttribute('data-app'))">Start MSF application
-                            <button class="btn btn-danger" th:data-app="${msfApp.applicationName}"
-                                    onclick="stopMsfApplication(this.getAttribute('data-app'))">Stop MSF application
-                            </button>
+                        </button>
+                        <button class="btn btn-danger" th:data-app="${msfApp.applicationName}"
+                                onclick="stopMsfApplication(this.getAttribute('data-app'))">Stop MSF application
+                        </button>
                     </div>
                 </div>
             </div>
@@ -148,7 +149,9 @@
         </div>
     </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"
+        integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs"
+        crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
         crossorigin="anonymous"></script>
@@ -169,7 +172,7 @@
         target: document.getElementById('inputDataJsonEditor'),
         props: {
             content: document.jsonContent,
-            onChange: (updatedContent, previousContent, {contentErrors, patchResult}) => {
+            onChange: (updatedContent) => {
                 document.jsonContent = updatedContent
             }
         }
