@@ -48,10 +48,10 @@
                 </div>
                 <div class="card-footer">
                     <div class="btn-group">
-                        <button class="btn btn-success" th:data-app="${msfApp.applicationName}"
+                        <button class="btn btn-success" th:if="${msfApp.getApplicationStatusAsString().equalsIgnoreCase('ready')}"  th:data-app="${msfApp.applicationName}"
                                 onclick="startMsfApplication(this.getAttribute('data-app'))">Start MSF application
                         </button>
-                        <button class="btn btn-danger" th:data-app="${msfApp.applicationName}"
+                        <button class="btn btn-danger" th:if="${!msfApp.getApplicationStatusAsString().equalsIgnoreCase('ready')}" th:data-app="${msfApp.applicationName}"
                                 onclick="stopMsfApplication(this.getAttribute('data-app'))">Stop MSF application
                         </button>
                     </div>
