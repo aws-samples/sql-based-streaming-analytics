@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 package com.amazonaws.sqlBasedStreamingAnalytics.entity;
 
 public class Statement {
@@ -18,7 +21,8 @@ public class Statement {
         return statementType;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
         return "Statement{" + "statementSql='" + statementSql + '\'' + ", statementType=" + statementType + '}';
     }
 }

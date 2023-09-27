@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 package com.amazonaws.sqlbasedstreaminganalytics.sqlBasedStreamingAnalyticsDataAccessUi.service;
 
 import com.amazonaws.sqlbasedstreaminganalytics.sqlBasedStreamingAnalyticsDataAccessUi.websocket.SocketHandler;
@@ -11,7 +14,8 @@ public class RecordProcessorFactory implements ShardRecordProcessorFactory {
         this.socketHandler = socketHandler;
     }
 
-    @Override public ShardRecordProcessor shardRecordProcessor() {
+    @Override
+    public ShardRecordProcessor shardRecordProcessor() {
         return new RecordProcessor(socketHandler);
     }
 }

@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 package com.amazonaws.sqlbasedstreaminganalytics.sqlBasedStreamingAnalyticsDataAccessUi.controller;
 
 import com.amazonaws.sqlbasedstreaminganalytics.sqlBasedStreamingAnalyticsDataAccessUi.service.KinesisProducerService;
@@ -8,7 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping({"/", "/index.html", "/index", "/home"})
+@RequestMapping({ "/", "/index.html", "/index", "/home" })
 public class IndexController {
 
     private final KinesisProducerService kinesisProducerService;
@@ -19,7 +22,8 @@ public class IndexController {
         this.msfApplicationService = msfApplicationService;
     }
 
-    @GetMapping public String getIndexPage(Model model) {
+    @GetMapping
+    public String getIndexPage(Model model) {
         model.addAttribute("randomDataGenerationEnabled", kinesisProducerService.isGeneratingRecords());
         model.addAttribute("msfApplicationList", msfApplicationService.getMsfApplications());
         return "index";
