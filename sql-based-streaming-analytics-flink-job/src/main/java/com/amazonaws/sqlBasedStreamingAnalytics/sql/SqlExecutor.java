@@ -1,5 +1,7 @@
-package com.amazonaws.sqlBasedStreamingAnalytics.sql;
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
 
+package com.amazonaws.sqlBasedStreamingAnalytics.sql;
 
 import com.amazonaws.sqlBasedStreamingAnalytics.entity.Statement;
 import org.apache.flink.table.api.bridge.java.StreamStatementSet;

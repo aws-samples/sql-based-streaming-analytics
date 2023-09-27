@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 package com.amazonaws.sqlbasedstreaminganalytics.sqlBasedStreamingAnalyticsDataAccessUi.service;
 
 import com.amazonaws.sqlbasedstreaminganalytics.sqlBasedStreamingAnalyticsDataAccessUi.config.DataAccessUiConfigurationProperties;
@@ -17,45 +20,44 @@ import java.util.UUID;
 @Service
 public class KinesisConsumerService {
 
-    private final KinesisAsyncClient
-            kinesisAsyncClient =
-            KinesisClientUtil.createKinesisAsyncClient(KinesisAsyncClient.builder());
-    private final DynamoDbAsyncClient dynamoClient = DynamoDbAsyncClient.builder().build();
-    private final CloudWatchAsyncClient cloudWatchClient = CloudWatchAsyncClient.builder().build();
-    private final DataAccessUiConfigurationProperties dataAccessUiConfigurationProperties;
-    private final SocketHandler socketHandler;
+        private final KinesisAsyncClient kinesisAsyncClient = KinesisClientUtil
+                        .createKinesisAsyncClient(KinesisAsyncClient.builder());
+        private final DynamoDbAsyncClient dynamoClient = DynamoDbAsyncClient.builder().build();
+        private final CloudWatchAsyncClient cloudWatchClient = CloudWatchAsyncClient.builder().build();
+        private final DataAccessUiConfigurationProperties dataAccessUiConfigurationProperties;
+        private final SocketHandler socketHandler;
 
-    public KinesisConsumerService(DataAccessUiConfigurationProperties dataAccessUiConfigurationProperties,
-                                  SocketHandler socketHandler) {
-        this.dataAccessUiConfigurationProperties = dataAccessUiConfigurationProperties;
-        this.socketHandler = socketHandler;
-    }
+        public KinesisConsumerService(DataAccessUiConfigurationProperties dataAccessUiConfigurationProperties,
+                        SocketHandler socketHandler) {
+                this.dataAccessUiConfigurationProperties = dataAccessUiConfigurationProperties;
+                this.socketHandler = socketHandler;
+        }
 
-    @PostConstruct public void consumeOutputRecords() {
-        ConfigsBuilder
-                configsBuilder =
-                new ConfigsBuilder(dataAccessUiConfigurationProperties.outputStreamName(),
-                        dataAccessUiConfigurationProperties.outputStreamName(),
-                        kinesisAsyncClient,
-                        dynamoClient,
-                        cloudWatchClient,
-                        UUID.randomUUID().toString(),
-                        new RecordProcessorFactory(socketHandler)).tableName(dataAccessUiConfigurationProperties.kclCheckpointDynamoTableName());
-        Scheduler
-                scheduler =
-                new Scheduler(configsBuilder.checkpointConfig(),
-                        configsBuilder.coordinatorConfig(),
-                        configsBuilder.leaseManagementConfig(),
-                        configsBuilder.lifecycleConfig(),
-                        configsBuilder.metricsConfig(),
-                        configsBuilder.processorConfig(),
-                        configsBuilder
-                                .retrievalConfig()
-                                .retrievalSpecificConfig(new PollingConfig(dataAccessUiConfigurationProperties.outputStreamName(),
-                                        kinesisAsyncClient)));
-        Thread schedulerThread = new Thread(scheduler);
-        schedulerThread.setDaemon(true);
-        schedulerThread.start();
-    }
+        @PostConstruct
+        public void consumeOutputRecords() {
+                ConfigsBuilder configsBuilder = new ConfigsBuilder(
+                                dataAccessUiConfigurationProperties.outputStreamName(),
+                                dataAccessUiConfigurationProperties.outputStreamName(),
+                                kinesisAsyncClient,
+                                dynamoClient,
+                                cloudWatchClient,
+                                UUID.randomUUID().toString(),
+                                new RecordProcessorFactory(socketHandler))
+                                .tableName(dataAccessUiConfigurationProperties.kclCheckpointDynamoTableName());
+                Scheduler scheduler = new Scheduler(configsBuilder.checkpointConfig(),
+                                configsBuilder.coordinatorConfig(),
+                                configsBuilder.leaseManagementConfig(),
+                                configsBuilder.lifecycleConfig(),
+                                configsBuilder.metricsConfig(),
+                                configsBuilder.processorConfig(),
+                                configsBuilder
+                                                .retrievalConfig()
+                                                .retrievalSpecificConfig(new PollingConfig(
+                                                                dataAccessUiConfigurationProperties.outputStreamName(),
+                                                                kinesisAsyncClient)));
+                Thread schedulerThread = new Thread(scheduler);
+                schedulerThread.setDaemon(true);
+                schedulerThread.start();
+        }
 
 }

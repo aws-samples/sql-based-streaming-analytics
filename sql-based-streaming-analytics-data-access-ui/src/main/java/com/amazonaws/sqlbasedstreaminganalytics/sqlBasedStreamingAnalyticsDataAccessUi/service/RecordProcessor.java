@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 package com.amazonaws.sqlbasedstreaminganalytics.sqlBasedStreamingAnalyticsDataAccessUi.service;
 
 import com.amazonaws.sqlbasedstreaminganalytics.sqlBasedStreamingAnalyticsDataAccessUi.websocket.SocketHandler;
@@ -18,11 +21,13 @@ public class RecordProcessor implements ShardRecordProcessor {
         this.socketHandler = socketHandler;
     }
 
-    @Override public void initialize(InitializationInput initializationInput) {
+    @Override
+    public void initialize(InitializationInput initializationInput) {
         LOGGER.info("Initializing @ Sequence: {}", initializationInput.extendedSequenceNumber());
     }
 
-    @Override public void processRecords(ProcessRecordsInput processRecordsInput) {
+    @Override
+    public void processRecords(ProcessRecordsInput processRecordsInput) {
         processRecordsInput.records().forEach(r -> {
             String body = SdkBytes.fromByteBuffer(r.data()).asUtf8String();
             LOGGER.info("Processing record pk: {} -- Seq: {} -- Txt: {}", r.partitionKey(), r.sequenceNumber(), body);
@@ -31,11 +36,13 @@ public class RecordProcessor implements ShardRecordProcessor {
 
     }
 
-    @Override public void leaseLost(LeaseLostInput leaseLostInput) {
+    @Override
+    public void leaseLost(LeaseLostInput leaseLostInput) {
         LOGGER.info("Lost lease, so terminating.");
     }
 
-    @Override public void shardEnded(ShardEndedInput shardEndedInput) {
+    @Override
+    public void shardEnded(ShardEndedInput shardEndedInput) {
         LOGGER.info("Reached shard end checkpointing.");
         try {
             shardEndedInput.checkpointer().checkpoint();
@@ -44,7 +51,8 @@ public class RecordProcessor implements ShardRecordProcessor {
         }
     }
 
-    @Override public void shutdownRequested(ShutdownRequestedInput shutdownRequestedInput) {
+    @Override
+    public void shutdownRequested(ShutdownRequestedInput shutdownRequestedInput) {
         LOGGER.info("Scheduler is shutting down, checkpointing.");
         try {
             shutdownRequestedInput.checkpointer().checkpoint();

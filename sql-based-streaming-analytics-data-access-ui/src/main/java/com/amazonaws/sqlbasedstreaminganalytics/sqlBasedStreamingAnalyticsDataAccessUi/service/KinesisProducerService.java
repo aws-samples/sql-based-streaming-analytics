@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 package com.amazonaws.sqlbasedstreaminganalytics.sqlBasedStreamingAnalyticsDataAccessUi.service;
 
 import com.amazonaws.sqlbasedstreaminganalytics.sqlBasedStreamingAnalyticsDataAccessUi.config.DataAccessUiConfigurationProperties;
@@ -19,9 +22,8 @@ import java.util.List;
 @Service
 public class KinesisProducerService {
 
-    private final KinesisClient
-            kinesisClient =
-            KinesisClient.builder().httpClient(UrlConnectionHttpClient.builder().build()).build();
+    private final KinesisClient kinesisClient = KinesisClient.builder()
+            .httpClient(UrlConnectionHttpClient.builder().build()).build();
     private final DataAccessUiConfigurationProperties dataAccessUiConfigurationProperties;
     private final Faker faker = new Faker();
     private String partitionKeyValue = "a";
@@ -38,11 +40,11 @@ public class KinesisProducerService {
     }
 
     public void startGeneratingRecords(String partitionKeyValue,
-                                       boolean useFakerForPartitionKeyValue,
-                                       boolean useJsonPointerForPartitionKeyValue,
-                                       String body,
-                                       boolean useFakerForBody,
-                                       int recordsToGenerateEvery2Seconds) {
+            boolean useFakerForPartitionKeyValue,
+            boolean useJsonPointerForPartitionKeyValue,
+            String body,
+            boolean useFakerForBody,
+            int recordsToGenerateEvery2Seconds) {
         this.partitionKeyValue = partitionKeyValue;
         this.useFakerForPartitionKeyValue = useFakerForPartitionKeyValue;
         this.useJsonPointerForPartitionKeyValue = useJsonPointerForPartitionKeyValue;
@@ -65,18 +67,17 @@ public class KinesisProducerService {
         return generatingRecordsRunning;
     }
 
-    @Scheduled(fixedDelay = 2000) private void produceRecords() {
+    @Scheduled(fixedDelay = 2000)
+    private void produceRecords() {
         if (!generatingRecordsRunning) {
             return;
         }
         List<PutRecordsRequestEntry> recordEntries = generateRecords();
-        PutRecordsRequest
-                putRecordsRequest =
-                PutRecordsRequest
-                        .builder()
-                        .streamName(dataAccessUiConfigurationProperties.inputStreamName())
-                        .records(recordEntries)
-                        .build();
+        PutRecordsRequest putRecordsRequest = PutRecordsRequest
+                .builder()
+                .streamName(dataAccessUiConfigurationProperties.inputStreamName())
+                .records(recordEntries)
+                .build();
         kinesisClient.putRecords(putRecordsRequest);
     }
 
