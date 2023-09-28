@@ -1,17 +1,5 @@
-/*
- * Copyright 2023 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance
- * with the License. A copy of the License is located at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * or in the 'license' file accompanying this file. This file is distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES
- * OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions
- * and limitations under the License.
- *
- *
- */
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
 
 package com.amazonaws.sqlbasedstreaminganalytics.sqlBasedStreamingAnalyticsDataAccessUi.service;
 
@@ -28,9 +16,8 @@ import java.util.List;
 @Service
 public class MsfApplicationService {
 
-    KinesisAnalyticsV2Client
-            kinesisAnalyticsClient =
-            KinesisAnalyticsV2Client.builder().httpClient(UrlConnectionHttpClient.builder().build()).build();
+    KinesisAnalyticsV2Client kinesisAnalyticsClient = KinesisAnalyticsV2Client.builder()
+            .httpClient(UrlConnectionHttpClient.builder().build()).build();
 
     private List<MsfApplication> msfApplicationList = new ArrayList<>();
 
@@ -52,14 +39,14 @@ public class MsfApplicationService {
                 .build());
     }
 
-    @Scheduled(initialDelay = 0, fixedDelay = 5000) private void refreshMsfApplicationList() {
+    @Scheduled(initialDelay = 0, fixedDelay = 5000)
+    private void refreshMsfApplicationList() {
         ListApplicationsRequest request = ListApplicationsRequest.builder().build();
         ListApplicationsResponse response = kinesisAnalyticsClient.listApplications(request);
         List<MsfApplication> newMsfApplicationList = new ArrayList<>();
         for (ApplicationSummary applicationSummary : response.applicationSummaries()) {
-            ListTagsForResourceResponse
-                    listTagsForResourceResponse =
-                    kinesisAnalyticsClient.listTagsForResource(ListTagsForResourceRequest
+            ListTagsForResourceResponse listTagsForResourceResponse = kinesisAnalyticsClient
+                    .listTagsForResource(ListTagsForResourceRequest
                             .builder()
                             .resourceARN(applicationSummary.applicationARN())
                             .build());

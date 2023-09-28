@@ -1,5 +1,7 @@
-package com.amazonaws.sqlBasedStreamingAnalytics.sql;
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
 
+package com.amazonaws.sqlBasedStreamingAnalytics.sql;
 
 import com.amazonaws.sqlBasedStreamingAnalytics.entity.Statement;
 import com.amazonaws.sqlBasedStreamingAnalytics.entity.StatementType;
@@ -19,7 +21,6 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
-
 
 public class SqlExtractor {
 
@@ -50,16 +51,15 @@ public class SqlExtractor {
         Set<Statement> statementSet = new LinkedHashSet<>();
         while ((line = bufferedReader.readLine()) != null) {
             if (!line.trim().isEmpty() &&
-                !line.trim().startsWith("--") &&
-                !line.trim().startsWith("/*") &&
-                !line.trim().startsWith("*")) {
+                    !line.trim().startsWith("--") &&
+                    !line.trim().startsWith("/*") &&
+                    !line.trim().startsWith("*")) {
                 currentStatementType = determineStatementType(line, currentStatementType);
                 String tplLine = line;
                 for (Object key : properties.keySet()) {
-                    tplLine =
-                            StringUtils.replace(tplLine,
-                                    "##" + key.toString() + "##",
-                                    properties.getProperty(key.toString()));
+                    tplLine = StringUtils.replace(tplLine,
+                            "##" + key.toString() + "##",
+                            properties.getProperty(key.toString()));
                 }
                 resultBuilder.append(tplLine);
                 if (line.endsWith(";")) {
@@ -81,14 +81,13 @@ public class SqlExtractor {
         InputStream resourceAsStream;
         if (sqlFileName.startsWith("s3://")) {
             URI uri = new URI(sqlFileName);
-            resourceAsStream =
-                    s3Client
-                            .getObjectAsBytes(GetObjectRequest
-                                    .builder()
-                                    .bucket(uri.getHost())
-                                    .key(uri.getPath().substring(1))
-                                    .build())
-                            .asInputStream();
+            resourceAsStream = s3Client
+                    .getObjectAsBytes(GetObjectRequest
+                            .builder()
+                            .bucket(uri.getHost())
+                            .key(uri.getPath().substring(1))
+                            .build())
+                    .asInputStream();
         } else {
             resourceAsStream = this.getClass().getClassLoader().getResourceAsStream(sqlFileName);
         }

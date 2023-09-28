@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 package com.amazonaws.sqlBasedStreamingAnalytics;
 
 import com.amazonaws.services.kinesisanalytics.runtime.KinesisAnalyticsRuntime;
@@ -26,9 +29,8 @@ public class SqlBasedStreamingAnalyticsFlinkJob {
             // properties.json file only exists on local, so it's local environment
             environment = LocalStreamEnvironment.createLocalEnvironmentWithWebUI(new Configuration());
             environment.setParallelism(1);
-            Map<String, Properties>
-                    applicationProperties1 =
-                    KinesisAnalyticsRuntime.getApplicationProperties("sql-based-streaming-analytics-flink-job/properties.json");
+            Map<String, Properties> applicationProperties1 = KinesisAnalyticsRuntime
+                    .getApplicationProperties("sql-based-streaming-analytics-flink-job/properties.json");
             applicationProperties = applicationProperties1.get("ENV");
         } else {
             LOGGER.info("Starting application in cloud mode");

@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 package com.amazonaws.sqlbasedstreaminganalytics.sqlBasedStreamingAnalyticsDataAccessUi.websocket;
 
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +37,7 @@ public class SocketHandler extends TextWebSocketHandler {
         List<WebSocketSession> closedSessions = new ArrayList<>();
         for (WebSocketSession webSocketSession : sessions) {
             try {
-                if(webSocketSession.isOpen()) {
+                if (webSocketSession.isOpen()) {
                     webSocketSession.sendMessage(new TextMessage(bla));
                     LOGGER.info("Successfully sent message to client {}", webSocketSession);
                 } else {
