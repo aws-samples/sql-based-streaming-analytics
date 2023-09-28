@@ -28,9 +28,7 @@ jobs:
           bodyFile: "CHANGELOG.md"
           prerelease: true
           allowUpdates: true
-          repo: "release"
           replacesArtifacts: true
-          token: ${{ secrets.RELEASE_GH_TOKEN }}
           tag: "SNAPSHOT"
   build_data_access_ui:
     name: Build data access UI on commit to branches not being main or dev
