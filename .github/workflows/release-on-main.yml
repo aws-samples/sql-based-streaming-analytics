@@ -29,7 +29,7 @@ jobs:
         with:
           artifacts: "sql-based-streaming-analytics-flink-job/target/sql-based-streaming-analytics-flink-job.jar"
           bodyFile: "CHANGELOG.md"
-          prerelease: true
+          prerelease: false
           allowUpdates: true
           replacesArtifacts: true
           tag: "MAIN"
@@ -52,7 +52,7 @@ jobs:
         with:
           artifacts: "sql-based-streaming-analytics-data-access-ui/target/sql-based-streaming-analytics-data-access-ui.jar"
           bodyFile: "CHANGELOG.md"
-          prerelease: true
+          prerelease: false
           allowUpdates: true
           replacesArtifacts: true
           tag: "MAIN"
