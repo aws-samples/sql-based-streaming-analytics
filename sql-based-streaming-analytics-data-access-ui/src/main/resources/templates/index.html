@@ -47,13 +47,22 @@ SPDX-License-Identifier: MIT-0 -->
       </div>
       <div class="row row-cols-1 row-cols-3 g-4">
         <div class="col" th:each="msfApp: ${msfApplicationList}">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title" th:text="${msfApp.getApplicationName()}"></h5>
-              <span
-                class="badge rounded-pill text-bg-primary"
-                th:text="${msfApp.getApplicationStatusAsString()}"
-              ></span>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${msfApp.getApplicationName()}"></h5>
+                    <span class="badge rounded-pill text-bg-primary"
+                          th:text="${msfApp.getApplicationStatusAsString()}"></span>
+                </div>
+                <div class="card-footer">
+                    <div class="btn-group">
+                        <button class="btn btn-success" th:if="${msfApp.getApplicationStatusAsString().equalsIgnoreCase('ready')}"  th:data-app="${msfApp.applicationName}"
+                                onclick="startMsfApplication(this.getAttribute('data-app'))">Start MSF application
+                        </button>
+                        <button class="btn btn-danger" th:if="${!msfApp.getApplicationStatusAsString().equalsIgnoreCase('ready')}" th:data-app="${msfApp.applicationName}"
+                                onclick="stopMsfApplication(this.getAttribute('data-app'))">Stop MSF application
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="card-footer">
               <div class="btn-group">

@@ -1,5 +1,20 @@
 # SQL based streaming analytics using Apache Flink running on Amazon Managed Service for Apache Flink
 
+## 📋 Table of content
+
+- [Problem statement](#problem-statement)
+- [Solution description](#solution-description)
+- [Architecture](#architecture)
+  - [Core solution](#core-solution)
+  - [Full solution](#full-solution)
+- [Installing the solution](#installing-the-solution)
+  - [Pre-requisites](#pre-requisites)
+  - [Deploy the core solution](#deploy-the-core-solution)
+  - [Deploy the full solution](#deploy-the-full-solution) 
+- [Getting started with the full solution](#getting-started-with-the-full-solution)
+  - [Modifying the random data generator](#modifying-the-random-data-generator)
+  - [Try out automatic reloading of SQL changes](#try-out-automatic-reloading-of-sql-changes)
+
 ## Problem statement
 Getting streaming analytics right is a big challenge for many organisations. Not only do you need a background in general data science you also need to have a good understanding of the data you want to analyze and the requirements that are leading to the need of streaming analytics. On top of that developers need to learn the Apache Flink DataStreamAPI. This solutions enabled business analysts - which often are knowledgeable in SQL - to write SQL based streaming analytics applications based on Apache Flink. This opens up the field of streaming analytics to a much broader audience. 
 
@@ -9,7 +24,7 @@ This solution demonstrates how to perform streaming analytics using a SQL file. 
 When installing this solution you have two choices:
 * Install only the core solution which creates:
   * S3 Bucket containing all the SQL files found in the `sql` folder
-  * One Apache Flink job running on Amazon Managed Service for Apache Flink (Amazon MSF) for every SQL file in the `sql` folder
+  * One Apache Flink job running on Amazon Managed Service for Apache Flink for every SQL file in the `sql` folder
   * Lambda which is triggered whenever a SQL file in the bucket is being changed
 * Install the full solution which includes:
   * All elements of the core solution
@@ -22,31 +37,41 @@ When installing this solution you have two choices:
 
 The generic Apache Flink job is available as a GitHub Release from this repository. Prior to deploying the CDK code it is being downloaded.
 
-## Core Solution architecture
+## Architecture
+
+### Core-Solution
 ![](assets/coreSolution.png "Core solution architecture")
 
-## Full Solution architecture
+### Full Solution
 ![](assets/fullSolution.png "Full solution architecture")
 
-## Install the core solution
+## Installing the solution
+
+### Pre-requisites
+- [Node.js](https://nodejs.org/en/download) >= 16
+- [TypeScript](https://www.typescriptlang.org/download)
+- This project uses the [AWS Cloud Development Kit (CDK)](https://docs.aws.amazon.com/cdk/v2/guide/home.html) to deploy the required resources into your AWS account. Therefore you have to make sure the CDK is installed. For more information take a look into the CDK documentation [here](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html#getting_started_install).
+- Make sure `cdk bootstrap` has been executed in your AWS account
+
+### Deploy the core solution
 After cloning the repository change into the `sql-based-streaming-analytics-cdk`directory and simply run the following command:
 
 ```shell
-cdk deploy core-solution-stack
+cdk deploy SqlBasedStreamingAnalyticsCoreSolutionStack
 ```
 
-## Install the full solution
+### Deploy the full solution
 After cloning the repository change into the `sql-based-streaming-analytics-cdk`directory and simply run the following command:
 
 ```shell
 cdk deploy --all
 ```
 
-## Getting started using the full-solution
+## Getting started with the full solution
 After installing the full solution you find the URL of the deployed web application in your command line outputs. After clicking that link a browser should open and you should be able to explore the DataAcccessUi.
 On the top of the page you see some status badges. One giving you information if the Random Data Generator is running the other one showing you if you're connected to the WebSocket (used for pushing new elements on the output Kinesis Data Stream).
-To simply try out the solution click on the `Start MSF application` of the `simpleSqlMsfApplication*` Apache Flink job. Starting the Apache Flink job takes approximately 2-3 minutes. During this time you can simply reload the web page and look at the status badge of the application. 
-After the Apache Flink job running on Amazon MSF is started you see a `Running` badge inside the `simpleSqlMsfApplication*` card.
+To simply try out the solution click on the `Start Flink application` of the `simpleSqlMsfApplication*` Apache Flink job. Starting the Apache Flink job takes approximately 2-3 minutes. During this time you can simply reload the web page and look at the status badge of the application. 
+After the Apache Flink job running on Amazon Managed Service for Apache is started you see a `Running` badge inside the `simpleSqlMsfApplication*` card.
 Now just start the random data generation by expanding the `Data generator` box and click on `Start data generation`.
 After expanding the `Data output` box you should see entries coming in. These have been processed by the Apache Flink job which is executing the `simpleSql.sql` file out of the `sql` folder.
 
@@ -71,8 +96,8 @@ Given the following JSON object
 you can access the city using this JSON pointer:
 `/customer/address/city`
 
-### Automatically apply a changes SQL
-To update the Apache Flink application running on Amazon MSF this solution has an update mechanism built in. 
+### Try out automatic reloading of SQL changes
+To update the Apache Flink application running on Amazon Managed Service for Apache Flink this solution has an update mechanism built in. 
 Let's imagine we want to display not only the productId but also the productName within the simpleSql job.
 We can change the SQL file to this:
 ``` sql
@@ -126,4 +151,4 @@ FROM orderIn;
 ```
 
 If you switch to your Amazon S3 Bucket named `sqlbasedstreaminganalyticsc-sqlfilebucket...` in your AWS Console you can see the all the SQL files in the bucket which are also in the `sql` folder of this project. Inside the AWS console you can click on `Upload` and upload the updated simpleSql.sql file.
-The upload triggers the `restartMsfApplication`-Lambda which updates the Amazon MSF application. You can check the status of the application updating inside the AWS Console by looking at the Managed Apache Flink service page or inside the deployed DataAccessUi.
+The upload triggers the `restartMsfApplication`-Lambda which updates the Apache Flink application. You can check the status of the application updating inside the AWS Console by looking at the Amazon Managed Service for Apache Flink service page or inside the deployed DataAccessUi.
