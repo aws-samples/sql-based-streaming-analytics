@@ -198,7 +198,7 @@ export class FullSolutionStack extends cdk.Stack {
   private async fileDownload(): Promise<void> {
     return new Promise((resolve, reject) => {
       fr.https.get(
-        'https://github.com/JWThewes/release/releases/download/SNAPSHOT/sql-based-streaming-analytics-data-access-ui.jar',
+        'https://github.com/aws-samples/sql-based-streaming-analytics/releases/download/MAIN/sql-based-streaming-analytics-data-access-ui.jar',
         (res) => {
           if (res.statusCode != 200) {
             reject();
