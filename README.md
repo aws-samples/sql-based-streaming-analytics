@@ -22,7 +22,7 @@ Getting streaming analytics right is a big challenge for many organisations. Not
 ## Solution description
 This solution demonstrates how to perform streaming analytics using a SQL file. Center to this solution is Apache Flink. The `sql-based-streaming-analytics-flink-job` is a generic Apache Flink job which retrieves a SQL file from a S3 Bucket on startup. Afterwards the SQL file is being parsed and submitted to the Apache Flink Environment. Using a Lambda trigger the Apache Flink job is being restarted whenever a SQL file in the S3 Bucket is being changed.
 
-> :warning: **The full solution is only accessible via an unsecure connection (HTTP). We encourage you to not deploy this into your production systems and make sure you secure your applications using TLS. For Elastic Beanstalk (used in this solution) you can find a guide on configuring HTTPS [here](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/configuring-https.html)!
+> :warning: The full solution is only accessible via an unsecure connection (HTTP). We encourage you to not deploy this into your production systems and make sure you secure your applications using TLS. For Elastic Beanstalk (used in this solution) you can find a guide on configuring HTTPS [here](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/configuring-https.html)!
 
 When installing this solution you have two choices:
 * Install only the core solution which creates:
