@@ -5,21 +5,24 @@
 - [Problem statement](#problem-statement)
 - [Solution description](#solution-description)
 - [Architecture](#architecture)
-  - [Core solution](#core-solution)
   - [Full solution](#full-solution)
+  - [Core solution](#core-solution)
 - [Installing the solution](#installing-the-solution)
   - [Pre-requisites](#pre-requisites)
-  - [Deploy the core solution](#deploy-the-core-solution)
   - [Deploy the full solution](#deploy-the-full-solution) 
+  - [Deploy the core solution](#deploy-the-core-solution)
 - [Getting started with the full solution](#getting-started-with-the-full-solution)
   - [Modifying the random data generator](#modifying-the-random-data-generator)
   - [Try out automatic reloading of SQL changes](#try-out-automatic-reloading-of-sql-changes)
+- [Core solution extension](#core-solution-extension)
 
 ## Problem statement
 Getting streaming analytics right is a big challenge for many organisations. Not only do you need a background in general data science you also need to have a good understanding of the data you want to analyze and the requirements that are leading to the need of streaming analytics. On top of that developers need to learn the Apache Flink DataStreamAPI. This solutions enabled business analysts - which often are knowledgeable in SQL - to write SQL based streaming analytics applications based on Apache Flink. This opens up the field of streaming analytics to a much broader audience. 
 
 ## Solution description
 This solution demonstrates how to perform streaming analytics using a SQL file. Center to this solution is Apache Flink. The `sql-based-streaming-analytics-flink-job` is a generic Apache Flink job which retrieves a SQL file from a S3 Bucket on startup. Afterwards the SQL file is being parsed and submitted to the Apache Flink Environment. Using a Lambda trigger the Apache Flink job is being restarted whenever a SQL file in the S3 Bucket is being changed.
+
+> :warning: **The full solution is only accessible via an unsecure connection (HTTP). We encourage you to not deploy this into your production systems and make sure you secure your applications using TLS. For Elastic Beanstalk (used in this solution) you can find a guide on configuring HTTPS [here](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/configuring-https.html)!
 
 When installing this solution you have two choices:
 * Install only the core solution which creates:
@@ -39,11 +42,11 @@ The generic Apache Flink job is available as a GitHub Release from this reposito
 
 ## Architecture
 
-### Core-Solution
-![](assets/coreSolution.png "Core solution architecture")
-
 ### Full Solution
 ![](assets/fullSolution.png "Full solution architecture")
+
+### Core-Solution
+![](assets/coreSolution.png "Core solution architecture")
 
 ## Installing the solution
 
@@ -53,18 +56,18 @@ The generic Apache Flink job is available as a GitHub Release from this reposito
 - This project uses the [AWS Cloud Development Kit (CDK)](https://docs.aws.amazon.com/cdk/v2/guide/home.html) to deploy the required resources into your AWS account. Therefore you have to make sure the CDK is installed. For more information take a look into the CDK documentation [here](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html#getting_started_install).
 - Make sure `cdk bootstrap` has been executed in your AWS account
 
-### Deploy the core solution
-After cloning the repository change into the `sql-based-streaming-analytics-cdk`directory and simply run the following command:
-
-```shell
-cdk deploy SqlBasedStreamingAnalyticsCoreSolutionStack
-```
-
 ### Deploy the full solution
 After cloning the repository change into the `sql-based-streaming-analytics-cdk`directory and simply run the following command:
 
 ```shell
 cdk deploy --all
+```
+
+### Deploy the core solution
+After cloning the repository change into the `sql-based-streaming-analytics-cdk`directory and simply run the following command:
+
+```shell
+cdk deploy SqlBasedStreamingAnalyticsCoreSolutionStack
 ```
 
 ## Getting started with the full solution
@@ -152,3 +155,7 @@ FROM orderIn;
 
 If you switch to your Amazon S3 Bucket named `sqlbasedstreaminganalyticsc-sqlfilebucket...` in your AWS Console you can see the all the SQL files in the bucket which are also in the `sql` folder of this project. Inside the AWS console you can click on `Upload` and upload the updated simpleSql.sql file.
 The upload triggers the `restartMsfApplication`-Lambda which updates the Apache Flink application. You can check the status of the application updating inside the AWS Console by looking at the Amazon Managed Service for Apache Flink service page or inside the deployed DataAccessUi.
+
+## Core solution extension
+If you want to build a SQL based streaming analytics solution based on the ideas of this application you can extend on the existing core solution. As this solution only deploys the Amazon Managed Service for Apache Flink applications and the S3 Bucket it is easily usable as the base of your application.
+Therefore you can use the `core-solution-stack.ts` inside the `sql-based-streaming-analytics-cdk/lib` folder.
