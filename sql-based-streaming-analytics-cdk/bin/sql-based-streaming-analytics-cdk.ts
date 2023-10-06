@@ -14,12 +14,15 @@ async function main() {
   let fullSolutionBaseStack = new FullSolutionBaseStack(
     app,
     'SqlBasedStreamingAnalyticsFullSolutionBaseStack',
-    {}
+    {
+      description: 'sql based streaming analytics full solution',
+    }
   );
   let coreSolutionStack = new CoreSolutionStack(
     app,
     'SqlBasedStreamingAnalyticsCoreSolutionStack',
     {
+      description: 'sql based streaming analytics core solution (uksb-1tupboc23)',
       inputStream: fullSolutionBaseStack.kinesisInputStream,
       outputStream: fullSolutionBaseStack.kinesisOutputStream,
     }
