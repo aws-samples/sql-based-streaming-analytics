@@ -22,7 +22,7 @@
     "@types/follow-redirects": "^1.14.2",
     "aws-cdk-lib": "2.99.1",
     "constructs": "^10.2.70",
-    "follow-redirects": "^1.15.3",
+    "follow-redirects": "^1.15.6",
     "source-map-support": "^0.5.21"
   }
 }
